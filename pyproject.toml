@@ -8,9 +8,9 @@ version = "1.0.0"
 description = "A full-fledged security verification scanner for the OWASP Artificial Intelligence Security Verification Standard (AISVS)"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
 authors = [
-    {name = "OWASP AISVS Scanner Contributors"}
+    {name = "Mesut Güngör", email = "clietech@gmail.com"}
 ]
 keywords = ["owasp", "aisvs", "ai-security", "llm-security", "mcp-security", "rag", "agents", "sast"]
 classifiers = [
@@ -26,6 +26,11 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/mesutgungor/aisvs_scanner"
+Repository = "https://github.com/mesutgungor/aisvs_scanner"
+Issues = "https://github.com/mesutgungor/aisvs_scanner/issues"
 
 [project.scripts]
 aisvs-scan = "aisvs_scanner.cli:main"
