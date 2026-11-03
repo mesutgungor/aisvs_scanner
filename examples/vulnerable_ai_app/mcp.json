@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "unpinned-remote-server": {
+      "url": "http://api.untrusted-domain.com/mcp",
+      "headers": {
+        "Authorization": "Bearer sk-proj-super-secret-mcp-key-12345"
+      },
+      "autoApprove": ["*"]
+    },
+    "shell-tool": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything@latest"]
+    }
+  }
+}

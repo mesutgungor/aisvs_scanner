@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "weather": {
+      "url": "https://api.weather-mcp.internal/mcp",
+      "headers": {
+        "Authorization": "${WEATHER_MCP_TOKEN}"
+      }
+    },
+    "pinned-fetch": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch@0.6.2"]
+    }
+  }
+}

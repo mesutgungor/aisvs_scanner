@@ -1,0 +1,2147 @@
+{
+  "standard": "OWASP AISVS",
+  "version": "1.01",
+  "source": "https://github.com/OWASP/AISVS/tree/main/1.01/en",
+  "requirements": [
+    {
+      "id": "1.1.1",
+      "text": "training data includes only features, attributes, and fields required for the model's stated purpose.",
+      "level": 1,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.1",
+      "section_title": "Training Data Origin & Data Security",
+      "retired": false
+    },
+    {
+      "id": "1.1.2",
+      "text": "an up-to-date inventory is kept of every training-data source, including its origin, responsible party, license, collection method, intended use constraints, and processing history.",
+      "level": 2,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.1",
+      "section_title": "Training Data Origin & Data Security",
+      "retired": false
+    },
+    {
+      "id": "1.1.3",
+      "text": "data integrity is provided when training data is stored and transferred.",
+      "level": 2,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.1",
+      "section_title": "Training Data Origin & Data Security",
+      "retired": false
+    },
+    {
+      "id": "1.1.4",
+      "text": "integrity monitoring is applied to guard against unauthorized modifications or corruption of training data.",
+      "level": 2,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.1",
+      "section_title": "Training Data Origin & Data Security",
+      "retired": false
+    },
+    {
+      "id": "1.1.5",
+      "text": "datasets are watermarked so their use can be attributed and any unauthorized use detected.",
+      "level": 3,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.1",
+      "section_title": "Training Data Origin & Data Security",
+      "retired": false
+    },
+    {
+      "id": "1.2.1",
+      "text": "labeling platforms enforce access controls that restrict who can create, modify, or approve annotations.",
+      "level": 1,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.2",
+      "section_title": "Data Labeling and Annotation Security",
+      "retired": false
+    },
+    {
+      "id": "1.2.2",
+      "text": "cryptographic integrity is applied to labeling artifacts.",
+      "level": 2,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.2",
+      "section_title": "Data Labeling and Annotation Security",
+      "retired": false
+    },
+    {
+      "id": "1.2.3",
+      "text": "sensitive information in labels is redacted, anonymized, or encrypted before being used in any labeling artifact.",
+      "level": 2,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.2",
+      "section_title": "Data Labeling and Annotation Security",
+      "retired": false
+    },
+    {
+      "id": "1.3.1",
+      "text": "training and fine-tuning pipelines implement poisoning detection techniques to identify potential data poisoning or unintentional corruption in training data.",
+      "level": 2,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.3",
+      "section_title": "Training Data Quality and Security Assurance",
+      "retired": false
+    },
+    {
+      "id": "1.3.2",
+      "text": "automatically generated labels are subject to confidence thresholds and consistency checks to detect misleading or low-confidence labels.",
+      "level": 2,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.3",
+      "section_title": "Training Data Quality and Security Assurance",
+      "retired": false
+    },
+    {
+      "id": "1.3.3",
+      "text": "models used in security-relevant decisions are evaluated for bias patterns.",
+      "level": 2,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.3",
+      "section_title": "Training Data Quality and Security Assurance",
+      "retired": false
+    },
+    {
+      "id": "1.3.4",
+      "text": "disallowed content is detected and removed before training.",
+      "level": 2,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.3",
+      "section_title": "Training Data Quality and Security Assurance",
+      "retired": false
+    },
+    {
+      "id": "1.3.5",
+      "text": "defenses against clean-label poisoning attacks are implemented.",
+      "level": 3,
+      "chapter": "C1",
+      "chapter_title": "Training Data Integrity & Traceability",
+      "section": "C1.3",
+      "section_title": "Training Data Quality and Security Assurance",
+      "retired": false
+    },
+    {
+      "id": "2.1.1",
+      "text": "input normalization is applied before tokenization or embedding.",
+      "level": 1,
+      "chapter": "C2",
+      "chapter_title": "Input Validation",
+      "section": "C2.1",
+      "section_title": "Prompt Injection Defenses",
+      "retired": false
+    },
+    {
+      "id": "2.1.2",
+      "text": "encoding and representation smuggling in inputs is detected and mitigated. Approved mitigations include canonicalization, strict schema validation, policy-based rejection, or explicit marking.",
+      "level": 1,
+      "chapter": "C2",
+      "chapter_title": "Input Validation",
+      "section": "C2.1",
+      "section_title": "Prompt Injection Defenses",
+      "retired": false
+    },
+    {
+      "id": "2.1.3",
+      "text": "all inputs that could steer model behavior are treated as untrusted and screened by a prompt injection detection ruleset or classifier, with flagged inputs blocked.",
+      "level": 1,
+      "chapter": "C2",
+      "chapter_title": "Input Validation",
+      "section": "C2.1",
+      "section_title": "Prompt Injection Defenses",
+      "retired": false
+    },
+    {
+      "id": "2.1.4",
+      "text": "input length controls prevent content from exceeding the context window. The controls must reject inputs that exceed token limits rather than truncating them.",
+      "level": 1,
+      "chapter": "C2",
+      "chapter_title": "Input Validation",
+      "section": "C2.1",
+      "section_title": "Prompt Injection Defenses",
+      "retired": false
+    },
+    {
+      "id": "2.1.5",
+      "text": "the system implements a character set restriction for all inputs. The restriction must use an allow-list approach derived from the languages and use cases the system supports, permitting only characters that are explicitly required.",
+      "level": 1,
+      "chapter": "C2",
+      "chapter_title": "Input Validation",
+      "section": "C2.1",
+      "section_title": "Prompt Injection Defenses",
+      "retired": false
+    },
+    {
+      "id": "2.1.6",
+      "text": "the system enforces an instruction hierarchy in which system and developer messages override user instructions and other untrusted inputs, even after user instructions have been processed. Untrusted content cannot acquire higher instruction priority through retrieval, tool processing, or persistence across conversation turns.",
+      "level": 2,
+      "chapter": "C2",
+      "chapter_title": "Input Validation",
+      "section": "C2.1",
+      "section_title": "Prompt Injection Defenses",
+      "retired": false
+    },
+    {
+      "id": "2.1.7",
+      "text": "reserved special tokens are encoded as literal characters and cannot be injected into the model context.",
+      "level": 2,
+      "chapter": "C2",
+      "chapter_title": "Input Validation",
+      "section": "C2.1",
+      "section_title": "Prompt Injection Defenses",
+      "retired": false
+    },
+    {
+      "id": "2.1.8",
+      "text": "the system can detect many-shot jailbreaking patterns.",
+      "level": 3,
+      "chapter": "C2",
+      "chapter_title": "Input Validation",
+      "section": "C2.1",
+      "section_title": "Prompt Injection Defenses",
+      "retired": false
+    },
+    {
+      "id": "2.2.1",
+      "text": "every prompt is scored by a content classifier for violence, self-harm, hate, and sexual content against configurable thresholds. Prompts that exceed those thresholds are rejected or sanitized before reaching the model context.",
+      "level": 1,
+      "chapter": "C2",
+      "chapter_title": "Input Validation",
+      "section": "C2.2",
+      "section_title": "Content & Policy Screening",
+      "retired": false
+    },
+    {
+      "id": "2.2.2",
+      "text": "prompt content classification is evaluated for unsupported languages.",
+      "level": 1,
+      "chapter": "C2",
+      "chapter_title": "Input Validation",
+      "section": "C2.2",
+      "section_title": "Content & Policy Screening",
+      "retired": false
+    },
+    {
+      "id": "2.2.3",
+      "text": "non-text inputs (image/video/audio) are checked for adversarial perturbations, steganographic payloads, hidden or embedded content, or known attack patterns.",
+      "level": 2,
+      "chapter": "C2",
+      "chapter_title": "Input Validation",
+      "section": "C2.2",
+      "section_title": "Content & Policy Screening",
+      "retired": false
+    },
+    {
+      "id": "2.2.4",
+      "text": "coordinated attacks spanning multiple input types (e.g., steganographic payloads in images combined with prompt injection in text) are detected and blocked.",
+      "level": 3,
+      "chapter": "C2",
+      "chapter_title": "Input Validation",
+      "section": "C2.2",
+      "section_title": "Content & Policy Screening",
+      "retired": false
+    },
+    {
+      "id": "3.1.1",
+      "text": "a model registry maintains an inventory of all deployed model artifacts and their origin.",
+      "level": 1,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.1",
+      "section_title": "Model Authorization & Integrity",
+      "retired": false
+    },
+    {
+      "id": "3.1.2",
+      "text": "all model artifacts (weights, configurations, tokenizers, base models, fine-tunes, adapters, and safety/policy models) are cryptographically signed by authorized entities.",
+      "level": 2,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.1",
+      "section_title": "Model Authorization & Integrity",
+      "retired": false
+    },
+    {
+      "id": "3.1.3",
+      "text": "model cryptographic signatures are verified at deployment admission and on load.",
+      "level": 2,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.1",
+      "section_title": "Model Authorization & Integrity",
+      "retired": false
+    },
+    {
+      "id": "3.2.1",
+      "text": "models undergo automated input validation testing, safety evaluation testing, and output sanitization testing before deployment.",
+      "level": 1,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.2",
+      "section_title": "Model Validation & Testing",
+      "retired": false
+    },
+    {
+      "id": "3.2.2",
+      "text": "models subjected to post-training quantization are re-evaluated against the same safety and alignment test suite on the compressed artifact before deployment.",
+      "level": 2,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.2",
+      "section_title": "Model Validation & Testing",
+      "retired": false
+    },
+    {
+      "id": "3.2.3",
+      "text": "provider model, version, or routing changes trigger security re-evaluation before continued use.",
+      "level": 3,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.2",
+      "section_title": "Model Validation & Testing",
+      "retired": false
+    },
+    {
+      "id": "3.3.1",
+      "text": "production deployments implement rollout mechanisms with automated rollback triggers.",
+      "level": 2,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.3",
+      "section_title": "Controlled Deployment & Rollback",
+      "retired": false
+    },
+    {
+      "id": "3.3.2",
+      "text": "rollback capabilities restore the complete model state.",
+      "level": 2,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.3",
+      "section_title": "Controlled Deployment & Rollback",
+      "retired": false
+    },
+    {
+      "id": "3.3.3",
+      "text": "model versions running in parallel use isolated runtime state so that AI-specific shared resources are not shared across deployments.",
+      "level": 2,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.3",
+      "section_title": "Controlled Deployment & Rollback",
+      "retired": false
+    },
+    {
+      "id": "3.4.1",
+      "text": "AI-specific runtime components are not shared across environment boundaries (e.g., development, staging, production).",
+      "level": 1,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.4",
+      "section_title": "Secure Development Practices",
+      "retired": false
+    },
+    {
+      "id": "3.4.2",
+      "text": "model training and fine-tuning environments are isolated from production environments.",
+      "level": 2,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.4",
+      "section_title": "Secure Development Practices",
+      "retired": false
+    },
+    {
+      "id": "3.5.1",
+      "text": "models used in RLHF fine-tuning are versioned and integrity-verified before use in a training run.",
+      "level": 2,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.5",
+      "section_title": "Pipeline Fine-Tuning",
+      "retired": false
+    },
+    {
+      "id": "3.5.2",
+      "text": "RLHF training stages include automated detection of reward hacking or reward model over-optimization.",
+      "level": 3,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.5",
+      "section_title": "Pipeline Fine-Tuning",
+      "retired": false
+    },
+    {
+      "id": "3.5.3",
+      "text": "in multi-stage fine-tuning pipelines, each stage's output is integrity-verified before it is consumed by the next stage.",
+      "level": 3,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.5",
+      "section_title": "Pipeline Fine-Tuning",
+      "retired": false
+    },
+    {
+      "id": "3.5.4",
+      "text": "fine-tuning checkpoints are registered as distinct artifacts.",
+      "level": 3,
+      "chapter": "C3",
+      "chapter_title": "Model Lifecycle Management & Change Control",
+      "section": "C3.5",
+      "section_title": "Pipeline Fine-Tuning",
+      "retired": false
+    },
+    {
+      "id": "4.1.1",
+      "text": "AI models execute in isolated sandboxes.",
+      "level": 1,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.1",
+      "section_title": "AI Workload Sandboxing & Validation",
+      "retired": false
+    },
+    {
+      "id": "4.1.2",
+      "text": "model artifact loading enforces an explicit allow-list of serialization formats that do not permit arbitrary code execution during deserialization.",
+      "level": 1,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.1",
+      "section_title": "AI Workload Sandboxing & Validation",
+      "retired": false
+    },
+    {
+      "id": "4.1.3",
+      "text": "workload attestation is performed before model loading to provide proof that the execution environment has not been tampered with.",
+      "level": 3,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.1",
+      "section_title": "AI Workload Sandboxing & Validation",
+      "retired": false
+    },
+    {
+      "id": "4.1.4",
+      "text": "confidential inference services protect model weights during runtime through isolated execution environments.",
+      "level": 3,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.1",
+      "section_title": "AI Workload Sandboxing & Validation",
+      "retired": false
+    },
+    {
+      "id": "4.2.1",
+      "text": "AI accelerator (GPU) firmware is version-pinned, signed, and attested at boot.",
+      "level": 2,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.2",
+      "section_title": "AI Hardware Security",
+      "retired": false
+    },
+    {
+      "id": "4.2.2",
+      "text": "execution within a trusted execution environment (TEE) provides hardware-enforced isolation, memory encryption, and integrity protection.",
+      "level": 3,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.2",
+      "section_title": "AI Hardware Security",
+      "retired": false
+    },
+    {
+      "id": "4.2.3",
+      "text": "AI accelerator (GPU) integrity is validated using hardware-based attestation mechanisms before each workload executes.",
+      "level": 3,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.2",
+      "section_title": "AI Hardware Security",
+      "retired": false
+    },
+    {
+      "id": "4.2.4",
+      "text": "accelerator (GPU) memory is isolated between workloads through partitioning mechanisms with memory sanitization between jobs.",
+      "level": 3,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.2",
+      "section_title": "AI Hardware Security",
+      "retired": false
+    },
+    {
+      "id": "4.2.5",
+      "text": "accelerator interconnects are restricted to approved topologies and authenticated endpoints.",
+      "level": 3,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.2",
+      "section_title": "AI Hardware Security",
+      "retired": false
+    },
+    {
+      "id": "4.3.1",
+      "text": "edge AI devices authenticate to central infrastructure using strong authentication mechanisms.",
+      "level": 1,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.3",
+      "section_title": "Edge & Distributed AI Security",
+      "retired": false
+    },
+    {
+      "id": "4.3.2",
+      "text": "models deployed to edge or mobile devices are cryptographically signed during packaging, and that the on-device runtime validates these signatures or checksums before loading or inference.",
+      "level": 2,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.3",
+      "section_title": "Edge & Distributed AI Security",
+      "retired": false
+    },
+    {
+      "id": "4.3.3",
+      "text": "inference runtimes enforce process, memory, and file access isolation.",
+      "level": 3,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.3",
+      "section_title": "Edge & Distributed AI Security",
+      "retired": false
+    },
+    {
+      "id": "4.3.4",
+      "text": "model weights and sensitive parameters stored locally are encrypted using hardware-backed key stores or secure enclaves.",
+      "level": 3,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.3",
+      "section_title": "Edge & Distributed AI Security",
+      "retired": false
+    },
+    {
+      "id": "4.3.5",
+      "text": "models packaged within mobile, IoT, or embedded applications are encrypted at rest, and decrypted only inside a trusted runtime or secure enclave, preventing direct extraction from the app package or filesystem.",
+      "level": 3,
+      "chapter": "C4",
+      "chapter_title": "Infrastructure, Configuration & Deployment Security",
+      "section": "C4.3",
+      "section_title": "Edge & Distributed AI Security",
+      "retired": false
+    },
+    {
+      "id": "5.1.1",
+      "text": "high-risk AI operations (model deployment, weight export, training data access, production configuration changes) require step-up authentication.",
+      "level": 3,
+      "chapter": "C5",
+      "chapter_title": "Access Control & Identity for AI Components & Users",
+      "section": "C5.1",
+      "section_title": "Authentication",
+      "retired": false
+    },
+    {
+      "id": "5.1.2",
+      "text": "AI agents in federated or multi-system deployments authenticate using short-lived, minimal-scoped, cryptographically signed tokens.",
+      "level": 3,
+      "chapter": "C5",
+      "chapter_title": "Access Control & Identity for AI Components & Users",
+      "section": "C5.1",
+      "section_title": "Authentication",
+      "retired": false
+    },
+    {
+      "id": "5.2.1",
+      "text": "every AI resource (datasets, endpoints, vector collections, embedding indices, compute instances) enforces access controls with explicit allow-lists and default-deny policies.",
+      "level": 2,
+      "chapter": "C5",
+      "chapter_title": "Access Control & Identity for AI Components & Users",
+      "section": "C5.2",
+      "section_title": "AI Resource Authorization & Classification",
+      "retired": false
+    },
+    {
+      "id": "5.2.2",
+      "text": "retrieval pipelines (e.g., RAG queries, embedding lookups) enforce the end-user's authorization context at each retrieval and assembly stage, rather than relying solely on the service account's permissions.",
+      "level": 2,
+      "chapter": "C5",
+      "chapter_title": "Access Control & Identity for AI Components & Users",
+      "section": "C5.2",
+      "section_title": "AI Resource Authorization & Classification",
+      "retired": false
+    },
+    {
+      "id": "5.2.3",
+      "text": "sensitive data is retrieved via retrieval pipelines (e.g., RAG queries, embedding lookups) to prevent permanent storage in models.",
+      "level": 2,
+      "chapter": "C5",
+      "chapter_title": "Access Control & Identity for AI Components & Users",
+      "section": "C5.2",
+      "section_title": "AI Resource Authorization & Classification",
+      "retired": false
+    },
+    {
+      "id": "5.2.4",
+      "text": "post-inference filtering mechanisms prevent responses from including data that the requester is not authorized to receive.",
+      "level": 2,
+      "chapter": "C5",
+      "chapter_title": "Access Control & Identity for AI Components & Users",
+      "section": "C5.2",
+      "section_title": "AI Resource Authorization & Classification",
+      "retired": false
+    },
+    {
+      "id": "5.2.5",
+      "text": "the policy decision point for agent authorization is isolated from the agent's execution environment.",
+      "level": 2,
+      "chapter": "C5",
+      "chapter_title": "Access Control & Identity for AI Components & Users",
+      "section": "C5.2",
+      "section_title": "AI Resource Authorization & Classification",
+      "retired": false
+    },
+    {
+      "id": "5.2.6",
+      "text": "privileged access to model weights, training pipelines, and production AI configuration is granted just in time, with a defined maximum session duration and automatic expiry. Zero Standing Privilege (ZSP) to these resources is encouraged.",
+      "level": 3,
+      "chapter": "C5",
+      "chapter_title": "Access Control & Identity for AI Components & Users",
+      "section": "C5.2",
+      "section_title": "AI Resource Authorization & Classification",
+      "retired": false
+    },
+    {
+      "id": "5.2.7",
+      "text": "data classification labels propagate to downstream resources (embeddings, prompt caches, model outputs).",
+      "level": 3,
+      "chapter": "C5",
+      "chapter_title": "Access Control & Identity for AI Components & Users",
+      "section": "C5.2",
+      "section_title": "AI Resource Authorization & Classification",
+      "retired": false
+    },
+    {
+      "id": "5.3.1",
+      "text": "shared model serving infrastructure prevents one tenant's fine-tuning, inference, or embedding operations from influencing or observing another tenant's operations.",
+      "level": 2,
+      "chapter": "C5",
+      "chapter_title": "Access Control & Identity for AI Components & Users",
+      "section": "C5.3",
+      "section_title": "Multi-Tenant Isolation",
+      "retired": false
+    },
+    {
+      "id": "5.3.2",
+      "text": "one tenant cannot influence or observe another tenant's operations through shared compute resources. Satisfying this requirement typically requires hardware partitioning, confidential computing, or dedicated per-tenant compute allocation.",
+      "level": 3,
+      "chapter": "C5",
+      "chapter_title": "Access Control & Identity for AI Components & Users",
+      "section": "C5.3",
+      "section_title": "Multi-Tenant Isolation",
+      "retired": false
+    },
+    {
+      "id": "6.1.1",
+      "text": "models are scanned for malicious code before import.",
+      "level": 1,
+      "chapter": "C6",
+      "chapter_title": "Supply Chain Security for Models",
+      "section": "C6.1",
+      "section_title": "Model Artifact Integrity",
+      "retired": false
+    },
+    {
+      "id": "6.1.2",
+      "text": "model weights, datasets, and fine-tuning adapters are downloaded only from approved sources.",
+      "level": 1,
+      "chapter": "C6",
+      "chapter_title": "Supply Chain Security for Models",
+      "section": "C6.1",
+      "section_title": "Model Artifact Integrity",
+      "retired": false
+    },
+    {
+      "id": "6.1.3",
+      "text": "every third-party model artifact can be integrity-verified.",
+      "level": 2,
+      "chapter": "C6",
+      "chapter_title": "Supply Chain Security for Models",
+      "section": "C6.1",
+      "section_title": "Model Artifact Integrity",
+      "retired": false
+    },
+    {
+      "id": "6.1.4",
+      "text": "models pass a behavioral acceptance test suite before being promoted to any non-development environment.",
+      "level": 2,
+      "chapter": "C6",
+      "chapter_title": "Supply Chain Security for Models",
+      "section": "C6.1",
+      "section_title": "Model Artifact Integrity",
+      "retired": false
+    },
+    {
+      "id": "6.2.1",
+      "text": "every model artifact publishes a version-controlled, machine-readable AI BOM listing datasets, weights, licenses, and data-origin statements.",
+      "level": 1,
+      "chapter": "C6",
+      "chapter_title": "Supply Chain Security for Models",
+      "section": "C6.2",
+      "section_title": "AI BOM & Supply Chain Monitoring",
+      "retired": false
+    },
+    {
+      "id": "6.2.2",
+      "text": "AI BOMs are cryptographically signed before deployment.",
+      "level": 2,
+      "chapter": "C6",
+      "chapter_title": "Supply Chain Security for Models",
+      "section": "C6.2",
+      "section_title": "AI BOM & Supply Chain Monitoring",
+      "retired": false
+    },
+    {
+      "id": "6.2.3",
+      "text": "AI BOM completeness checks fail the build if any component metadata is missing.",
+      "level": 2,
+      "chapter": "C6",
+      "chapter_title": "Supply Chain Security for Models",
+      "section": "C6.2",
+      "section_title": "AI BOM & Supply Chain Monitoring",
+      "retired": false
+    },
+    {
+      "id": "7.1.1",
+      "text": "the application validates all model outputs against a defined schema and rejects any output that does not match.",
+      "level": 1,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.1",
+      "section_title": "Output Format Enforcement",
+      "retired": false
+    },
+    {
+      "id": "7.1.2",
+      "text": "model-generated output is bounded by length limits and termination controls.",
+      "level": 1,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.1",
+      "section_title": "Output Format Enforcement",
+      "retired": false
+    },
+    {
+      "id": "7.1.3",
+      "text": "when an application uses an AI response to decide whether to perform an action, it does not perform that action if the AI refuses the request, reports a failure, or returns a response the application cannot correctly read or understand.",
+      "level": 2,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.1",
+      "section_title": "Output Format Enforcement",
+      "retired": false
+    },
+    {
+      "id": "7.2.1",
+      "text": "the system assesses the reliability of generated answers using a confidence estimation method.",
+      "level": 2,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.2",
+      "section_title": "Hallucination Detection & Mitigation",
+      "retired": false
+    },
+    {
+      "id": "7.2.2",
+      "text": "the application automatically blocks answers or switches to a fallback message if the confidence score drops below a defined threshold.",
+      "level": 2,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.2",
+      "section_title": "Hallucination Detection & Mitigation",
+      "retired": false
+    },
+    {
+      "id": "7.2.3",
+      "text": "for responses classified as high-risk by policy, the system performs an additional verification step.",
+      "level": 3,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.2",
+      "section_title": "Hallucination Detection & Mitigation",
+      "retired": false
+    },
+    {
+      "id": "7.3.1",
+      "text": "automated classifiers scan every response and block content that matches defined harmful content categories.",
+      "level": 1,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.3",
+      "section_title": "Output Safety",
+      "retired": false
+    },
+    {
+      "id": "7.3.2",
+      "text": "output filters detect and block responses that disclose system prompt content or backend data.",
+      "level": 2,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.3",
+      "section_title": "Output Safety",
+      "retired": false
+    },
+    {
+      "id": "7.3.3",
+      "text": "model-generated output is prevented from triggering outbound requests.",
+      "level": 2,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.3",
+      "section_title": "Output Safety",
+      "retired": false
+    },
+    {
+      "id": "7.3.4",
+      "text": "model outputs are checked for hidden, encoded, or misleading content created through homoglyphs, formatting, metadata, or structured fields.",
+      "level": 3,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.3",
+      "section_title": "Output Safety",
+      "retired": false
+    },
+    {
+      "id": "7.4.1",
+      "text": "responses generated using retrieval-augmented generation (RAG) include attribution to the source documents.",
+      "level": 1,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.4",
+      "section_title": "Source Attribution & Citation Integrity",
+      "retired": false
+    },
+    {
+      "id": "7.4.2",
+      "text": "RAG attributions are derived from retrieval metadata and are not generated by the model, so provenance cannot be fabricated.",
+      "level": 1,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.4",
+      "section_title": "Source Attribution & Citation Integrity",
+      "retired": false
+    },
+    {
+      "id": "7.4.3",
+      "text": "claims in a RAG response can be traced to the retrieved chunk.",
+      "level": 2,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.4",
+      "section_title": "Source Attribution & Citation Integrity",
+      "retired": false
+    },
+    {
+      "id": "7.4.4",
+      "text": "generated media is watermarked to prove it was AI-generated.",
+      "level": 3,
+      "chapter": "C7",
+      "chapter_title": "Model Behavior, Output Control & Safety Assurance",
+      "section": "C7.4",
+      "section_title": "Source Attribution & Citation Integrity",
+      "retired": false
+    },
+    {
+      "id": "8.1.1",
+      "text": "vector identifiers and namespaces enforce uniqueness per tenant and prevent cross-tenant collisions.",
+      "level": 1,
+      "chapter": "C8",
+      "chapter_title": "Memory, Embeddings & Vector Database Security",
+      "section": "C8.1",
+      "section_title": "Access Controls on Memory & RAG Indices",
+      "retired": false
+    },
+    {
+      "id": "8.1.2",
+      "text": "document metadata tags are immutable after the initial write.",
+      "level": 2,
+      "chapter": "C8",
+      "chapter_title": "Memory, Embeddings & Vector Database Security",
+      "section": "C8.1",
+      "section_title": "Access Controls on Memory & RAG Indices",
+      "retired": false
+    },
+    {
+      "id": "8.1.3",
+      "text": "retrieval operations enforce scope constraints.",
+      "level": 2,
+      "chapter": "C8",
+      "chapter_title": "Memory, Embeddings & Vector Database Security",
+      "section": "C8.1",
+      "section_title": "Access Controls on Memory & RAG Indices",
+      "retired": false
+    },
+    {
+      "id": "8.2.1",
+      "text": "sensitive fields are detected before embedding and are masked, tokenized, or dropped.",
+      "level": 1,
+      "chapter": "C8",
+      "chapter_title": "Memory, Embeddings & Vector Database Security",
+      "section": "C8.2",
+      "section_title": "Embedding Sanitization & Validation",
+      "retired": false
+    },
+    {
+      "id": "8.2.2",
+      "text": "vectors that fall outside normal clustering patterns are flagged and quarantined before entering production indices.",
+      "level": 2,
+      "chapter": "C8",
+      "chapter_title": "Memory, Embeddings & Vector Database Security",
+      "section": "C8.2",
+      "section_title": "Embedding Sanitization & Validation",
+      "retired": false
+    },
+    {
+      "id": "8.2.3",
+      "text": "no component reachable from agent execution can write agent outputs or tool outputs to trusted agent memory without explicit source validation.",
+      "level": 2,
+      "chapter": "C8",
+      "chapter_title": "Memory, Embeddings & Vector Database Security",
+      "section": "C8.2",
+      "section_title": "Embedding Sanitization & Validation",
+      "retired": false
+    },
+    {
+      "id": "8.2.4",
+      "text": "content crafted to manipulate retrieval results is detected and rejected or quarantined before vectorization.",
+      "level": 3,
+      "chapter": "C8",
+      "chapter_title": "Memory, Embeddings & Vector Database Security",
+      "section": "C8.2",
+      "section_title": "Embedding Sanitization & Validation",
+      "retired": false
+    },
+    {
+      "id": "8.2.5",
+      "text": "new content written to memory is checked for contradictions with what is already stored and that conflicts trigger alerts.",
+      "level": 3,
+      "chapter": "C8",
+      "chapter_title": "Memory, Embeddings & Vector Database Security",
+      "section": "C8.2",
+      "section_title": "Embedding Sanitization & Validation",
+      "retired": false
+    },
+    {
+      "id": "8.3.1",
+      "text": "expired vectors are excluded from retrieval results.",
+      "level": 2,
+      "chapter": "C8",
+      "chapter_title": "Memory, Embeddings & Vector Database Security",
+      "section": "C8.3",
+      "section_title": "Memory Expiry & Revocation",
+      "retired": false
+    },
+    {
+      "id": "8.3.2",
+      "text": "memory can be reset.",
+      "level": 2,
+      "chapter": "C8",
+      "chapter_title": "Memory, Embeddings & Vector Database Security",
+      "section": "C8.3",
+      "section_title": "Memory Expiry & Revocation",
+      "retired": false
+    },
+    {
+      "id": "8.3.3",
+      "text": "quarantined content is retained but excluded from all retrieval results.",
+      "level": 3,
+      "chapter": "C8",
+      "chapter_title": "Memory, Embeddings & Vector Database Security",
+      "section": "C8.3",
+      "section_title": "Memory Expiry & Revocation",
+      "retired": false
+    },
+    {
+      "id": "9.1.1",
+      "text": "per-tool quotas and timeouts (e.g., CPU, memory, disk, egress, and execution time) are enforced by the runtime.",
+      "level": 1,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.1",
+      "section_title": "Execution Budgets, Loop Control, and Circuit Breakers",
+      "retired": false
+    },
+    {
+      "id": "9.1.2",
+      "text": "per-execution budgets (e.g., max recursion depth, token use, and monetary spend) are enforced by the runtime.",
+      "level": 1,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.1",
+      "section_title": "Execution Budgets, Loop Control, and Circuit Breakers",
+      "retired": false
+    },
+    {
+      "id": "9.1.3",
+      "text": "a swarm-level kill-switch exists that can halt all active agent instances.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.1",
+      "section_title": "Execution Budgets, Loop Control, and Circuit Breakers",
+      "retired": false
+    },
+    {
+      "id": "9.2.1",
+      "text": "the agent runtime blocks execution of privileged or irreversible actions until explicit human approval is received and verified.",
+      "level": 1,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.2",
+      "section_title": "High-Impact Action Approval and Irreversibility Controls",
+      "retired": false
+    },
+    {
+      "id": "9.2.2",
+      "text": "approval requests display canonicalized and complete action parameters, such as diffs, commands, recipients, amounts, resources, and scopes, without truncation or unsafe transformation.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.2",
+      "section_title": "High-Impact Action Approval and Irreversibility Controls",
+      "retired": false
+    },
+    {
+      "id": "9.2.3",
+      "text": "each high-impact action has a trusted reversibility classification, such as read-only, reversible, externally reversible, or irreversible.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.2",
+      "section_title": "High-Impact Action Approval and Irreversibility Controls",
+      "retired": false
+    },
+    {
+      "id": "9.2.4",
+      "text": "the agent runtime enforces reversibility classifications by blocking, requiring approval, or restricting actions based on their impact and ability to be reversed.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.2",
+      "section_title": "High-Impact Action Approval and Irreversibility Controls",
+      "retired": false
+    },
+    {
+      "id": "9.2.5",
+      "text": "any self-modification capability (e.g., prompt rewriting, tool-list changes, parameter updates) is restricted by boundaries that are enforced by the runtime and cannot be changed or bypassed by the agent.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.2",
+      "section_title": "High-Impact Action Approval and Irreversibility Controls",
+      "retired": false
+    },
+    {
+      "id": "9.2.6",
+      "text": "agentic systems include an AI-augmented review of planned high-risk actions before execution that adds to, and does not replace, the deterministic policy gate.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.2",
+      "section_title": "High-Impact Action Approval and Irreversibility Controls",
+      "retired": false
+    },
+    {
+      "id": "9.2.7",
+      "text": "the AI-augmented review mechanism is protected against manipulation by adversarial inputs, and cannot be overridden or bypassed through prompt injection.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.2",
+      "section_title": "High-Impact Action Approval and Irreversibility Controls",
+      "retired": false
+    },
+    {
+      "id": "9.2.8",
+      "text": "approvals are cryptographically bound to action parameters, requester identity, execution context, and a unique single-use nonce, and are rejected if any bound value changes or the nonce is reused.",
+      "level": 3,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.2",
+      "section_title": "High-Impact Action Approval and Irreversibility Controls",
+      "retired": false
+    },
+    {
+      "id": "9.2.9",
+      "text": "cryptographic key material or credentials used to issue approvals are isolated from the agent runtime, and that the runtime can neither read them nor use them to issue approvals.",
+      "level": 3,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.2",
+      "section_title": "High-Impact Action Approval and Irreversibility Controls",
+      "retired": false
+    },
+    {
+      "id": "9.2.10",
+      "text": "approval gates for multi-step or multi-agent action chains enforce the highest-impact reversibility classification present anywhere in the chain, where the chain is established by a component outside the control of the agent being gated.",
+      "level": 3,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.2",
+      "section_title": "High-Impact Action Approval and Irreversibility Controls",
+      "retired": false
+    },
+    {
+      "id": "9.2.11",
+      "text": "agent execution which would exceed the approved action chain is blocked until a new approval is obtained, and that the new approval enforces the highest-impact reversibility classification present across the cumulative chain.",
+      "level": 3,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.2",
+      "section_title": "High-Impact Action Approval and Irreversibility Controls",
+      "retired": false
+    },
+    {
+      "id": "9.3.1",
+      "text": "each tool/plugin executes in a least-privilege sandbox or is otherwise isolated from model operations.",
+      "level": 1,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.3",
+      "section_title": "Component Isolation and Tool Authorization",
+      "retired": false
+    },
+    {
+      "id": "9.3.2",
+      "text": "tool outputs are validated against schemas.",
+      "level": 1,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.3",
+      "section_title": "Component Isolation and Tool Authorization",
+      "retired": false
+    },
+    {
+      "id": "9.3.3",
+      "text": "tool manifests declare required privileges, resource limits, and output validation requirements.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.3",
+      "section_title": "Component Isolation and Tool Authorization",
+      "retired": false
+    },
+    {
+      "id": "9.3.4",
+      "text": "the runtime enforces the privileges, resource limits, and output-validation requirements declared in tool manifests.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.3",
+      "section_title": "Component Isolation and Tool Authorization",
+      "retired": false
+    },
+    {
+      "id": "9.3.5",
+      "text": "components processing untrusted data are isolated from tool-calling capabilities, ensuring that compromised data processing cannot trigger unauthorized tool invocations.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.3",
+      "section_title": "Component Isolation and Tool Authorization",
+      "retired": false
+    },
+    {
+      "id": "9.3.6",
+      "text": "there is architectural separation between processing of untrusted tool outputs and agent operations.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.3",
+      "section_title": "Component Isolation and Tool Authorization",
+      "retired": false
+    },
+    {
+      "id": "9.3.7",
+      "text": "external resources named in model output are verified against an approved allow-list or registry before the agent installs or invokes them.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.3",
+      "section_title": "Component Isolation and Tool Authorization",
+      "retired": false
+    },
+    {
+      "id": "9.3.8",
+      "text": "policy violations trigger automatic containment of affected tools, such as stopping their execution, isolating them, or revoking their permissions.",
+      "level": 3,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.3",
+      "section_title": "Component Isolation and Tool Authorization",
+      "retired": false
+    },
+    {
+      "id": "9.3.9",
+      "text": "services reachable from agent or tool sandboxes enforce the defined run, task, or tenant isolation policy on agent-writable state, including object names.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.3",
+      "section_title": "Component Isolation and Tool Authorization",
+      "retired": false
+    },
+    {
+      "id": "9.4.1",
+      "text": "each agent instance has a unique cryptographic identity and authenticates as a first-class principal to downstream systems.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.4",
+      "section_title": "Agent and Orchestrator Identity",
+      "retired": false
+    },
+    {
+      "id": "9.4.2",
+      "text": "agent-initiated actions are cryptographically bound to each step of the execution chain for non-repudiation.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.4",
+      "section_title": "Agent and Orchestrator Identity",
+      "retired": false
+    },
+    {
+      "id": "9.4.3",
+      "text": "agent identity credentials rotate on a defined schedule.",
+      "level": 3,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.4",
+      "section_title": "Agent and Orchestrator Identity",
+      "retired": false
+    },
+    {
+      "id": "9.4.4",
+      "text": "agent state persisted between invocations is integrity-protected.",
+      "level": 3,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.4",
+      "section_title": "Agent and Orchestrator Identity",
+      "retired": false
+    },
+    {
+      "id": "9.5.1",
+      "text": "agent actions are authorized against fine-grained policies enforced by the runtime that restrict which tools an agent may invoke, and which parameter values it may supply.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.5",
+      "section_title": "Agent Authorization, Delegation, and Continuous Enforcement",
+      "retired": false
+    },
+    {
+      "id": "9.5.2",
+      "text": "when an agent acts on a user's behalf, the runtime propagates an integrity-protected, scope-limited token that carries the user's authorization context and is enforced at every downstream call.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.5",
+      "section_title": "Agent Authorization, Delegation, and Continuous Enforcement",
+      "retired": false
+    },
+    {
+      "id": "9.5.3",
+      "text": "all access control decisions are enforced by application logic or a policy engine, never by the AI model itself.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.5",
+      "section_title": "Agent Authorization, Delegation, and Continuous Enforcement",
+      "retired": false
+    },
+    {
+      "id": "9.5.4",
+      "text": "secrets and credentials required by an agent at runtime are not exposed within the model's observable context, including the context window, system prompts, or tool call parameters.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.5",
+      "section_title": "Agent Authorization, Delegation, and Continuous Enforcement",
+      "retired": false
+    },
+    {
+      "id": "9.5.5",
+      "text": "inter-agent task delegation is restricted by an explicit authorization policy.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.5",
+      "section_title": "Agent Authorization, Delegation, and Continuous Enforcement",
+      "retired": false
+    },
+    {
+      "id": "9.5.6",
+      "text": "long-running agent sessions re-evaluate current backend authorization policy on every privileged action.",
+      "level": 3,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.5",
+      "section_title": "Agent Authorization, Delegation, and Continuous Enforcement",
+      "retired": false
+    },
+    {
+      "id": "9.5.7",
+      "text": "authority derived through delegation never exceeds the delegating agent's current authority.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.5",
+      "section_title": "Agent Authorization, Delegation, and Continuous Enforcement",
+      "retired": false
+    },
+    {
+      "id": "9.6.1",
+      "text": "a manual kill-switch mechanism exists to immediately halt AI model inference and outputs.",
+      "level": 1,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.6",
+      "section_title": "Shutdown and Graceful Degradation",
+      "retired": false
+    },
+    {
+      "id": "9.6.2",
+      "text": "when a human-approval gate is not satisfied within the defined approval time, the system blocks the pending action.",
+      "level": 2,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.6",
+      "section_title": "Shutdown and Graceful Degradation",
+      "retired": false
+    },
+    {
+      "id": "9.6.3",
+      "text": "kill-switch commands are implemented through an out-of-band channel that is isolated from the agent runtime.",
+      "level": 3,
+      "chapter": "C9",
+      "chapter_title": "Orchestration & Agentic Security",
+      "section": "C9.6",
+      "section_title": "Shutdown and Graceful Degradation",
+      "retired": false
+    },
+    {
+      "id": "10.1.1",
+      "text": "MCP components are obtained only from trusted sources and cryptographically verified.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.1",
+      "section_title": "Component Integrity",
+      "retired": false
+    },
+    {
+      "id": "10.1.2",
+      "text": "only allow-listed MCP servers are permitted.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.1",
+      "section_title": "Component Integrity",
+      "retired": false
+    },
+    {
+      "id": "10.1.3",
+      "text": "locally launched MCP servers run in a least-privilege sandbox with restricted file system, network, and system access.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.1",
+      "section_title": "Component Integrity",
+      "retired": false
+    },
+    {
+      "id": "10.2.1",
+      "text": "MCP servers validate access tokens for each request and do not rely on transport security alone.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.2",
+      "section_title": "Authentication & Authorization",
+      "retired": false
+    },
+    {
+      "id": "10.2.2",
+      "text": "MCP servers validate the presented access token's issuer, audience, expiration, and scope claims in accordance with OAuth 2.1.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.2",
+      "section_title": "Authentication & Authorization",
+      "retired": false
+    },
+    {
+      "id": "10.2.3",
+      "text": "MCP servers acting as OAuth 2.1 resource servers do not store or persist access tokens or user credentials.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.2",
+      "section_title": "Authentication & Authorization",
+      "retired": false
+    },
+    {
+      "id": "10.2.4",
+      "text": "MCP tools/list returns only tools permitted by the requester's authorized scopes, and that list responses vary only by authorization context, never by connection.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.2",
+      "section_title": "Authentication & Authorization",
+      "retired": false
+    },
+    {
+      "id": "10.2.5",
+      "text": "MCP servers enforce access control on every tool invocation, validating that the user's access token authorizes both the requested tool and the specific argument values supplied.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.2",
+      "section_title": "Authentication & Authorization",
+      "retired": false
+    },
+    {
+      "id": "10.2.6",
+      "text": "Requirement removed.",
+      "level": 0,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.2",
+      "section_title": "Authentication & Authorization",
+      "retired": true
+    },
+    {
+      "id": "10.2.7",
+      "text": "MCP servers only accept tokens explicitly issued for them, and do not pass tokens issued for other services through to downstream APIs.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.2",
+      "section_title": "Authentication & Authorization",
+      "retired": false
+    },
+    {
+      "id": "10.2.8",
+      "text": "MCP servers protect the integrity of `requestState` that influences authorization, resource access, or business logic, and reject state that fails verification.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.2",
+      "section_title": "Authentication & Authorization",
+      "retired": false
+    },
+    {
+      "id": "10.2.9",
+      "text": "MCP clients bind persisted OAuth client credentials to the issuing authorization server and do not present them to a different authorization server.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.2",
+      "section_title": "Authentication & Authorization",
+      "retired": false
+    },
+    {
+      "id": "10.2.10",
+      "text": "MCP servers enforce single use server-side for `requestState` that must be consumed at most once.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.2",
+      "section_title": "Authentication & Authorization",
+      "retired": false
+    },
+    {
+      "id": "10.3.1",
+      "text": "authenticated, encrypted streamable HTTP is used for MCP transport for remote services.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.3",
+      "section_title": "Secure Transport",
+      "retired": false
+    },
+    {
+      "id": "10.3.2",
+      "text": "stdio transport is permitted only in controlled local environments.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.3",
+      "section_title": "Secure Transport",
+      "retired": false
+    },
+    {
+      "id": "10.3.3",
+      "text": "MCP servers validate both the Origin header and the Host header independently on all HTTP-based transports to prevent DNS rebinding attacks.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.3",
+      "section_title": "Secure Transport",
+      "retired": false
+    },
+    {
+      "id": "10.3.4",
+      "text": "MCP clients enforce a minimum acceptable protocol version and do not retry with, or fall back to, a protocol version or legacy handshake below that minimum.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.3",
+      "section_title": "Secure Transport",
+      "retired": false
+    },
+    {
+      "id": "10.3.5",
+      "text": "access tokens between the MCP client and server are sender-constrained using mTLS or DPoP.",
+      "level": 3,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.3",
+      "section_title": "Secure Transport",
+      "retired": false
+    },
+    {
+      "id": "10.3.6",
+      "text": "MCP intermediaries enforcing policy on mirrored request headers confirm that the protocol version indicates a revision requiring header and body validation before trusting those headers.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.3",
+      "section_title": "Secure Transport",
+      "retired": false
+    },
+    {
+      "id": "10.4.1",
+      "text": "MCP tools/list and tools/call responses are validated against their declared schemas before being injected into the model context.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.2",
+      "text": "MCP tools/list and tools/call responses are screened for indirect prompt injection before being injected into the model context.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.3",
+      "text": "MCP servers reject unrecognized or oversized parameters in function calls.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.4",
+      "text": "all MCP servers enforce strict schema validation.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.5",
+      "text": "all MCP transports enforce maximum payload size limits.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.6",
+      "text": "MCP servers sign tool responses with a unique nonce and timestamp so MCP clients can detect replay attempts.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.7",
+      "text": "MCP clients present users with explicit consent dialogue and cancellation options upon installation of a local MCP server.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.8",
+      "text": "MCP clients maintain a snapshot of tool definitions and that any change to a tool definition triggers re-approval before the modified tool can be invoked.",
+      "level": 3,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.9",
+      "text": "MCP proxy servers using a shared upstream OAuth client identity do not allow a requesting MCP client to inherit authorization established for a different MCP client.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.10",
+      "text": "MCP clients bind each approved MCP server's granted consent and authorization to the connection endpoint approved for that server, and require user re-approval before any further interaction once that endpoint changes.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.11",
+      "text": "MCP clients reject tool definitions containing invalid mirrored-header annotations, excluding the affected tool rather than the entire tool list.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.12",
+      "text": "MCP servers reject requests where mirrored request headers do not match the corresponding request body values, after decoding any encoded header values.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.13",
+      "text": "MCP implementations apply resource bounds to schema validation, such as a maximum schema depth, a cap on the total number of nested schema elements, or a per-validation time budget.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.14",
+      "text": "MCP implementations do not automatically dereference JSON Schema `$ref` values that resolve to network URIs, and that any opt-in external resolution is disabled by default and rejects loopback, link-local, and private network addresses.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.15",
+      "text": "MCP implementations reject schemas that fail to validate due to an unresolved external `$ref` rather than treating them as permissive.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.16",
+      "text": "MCP clients and intermediaries reuse cached responses marked with a private cache scope only within the authorization context that produced them, and do not cache results of multi round-trip requests.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.17",
+      "text": "MCP servers mark cacheable results containing user-specific or authorization-filtered data with a private cache scope.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.18",
+      "text": "MCP servers do not use form-mode elicitation to request secrets or payment credentials, and that in URL-mode elicitation the user completing the flow is the same user who initiated it.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.19",
+      "text": "MCP servers exclude end-user credentials and personal data from URL-mode elicitation URLs, and do not issue URLs that are pre-authenticated to a protected resource.",
+      "level": 1,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.20",
+      "text": "MCP clients require explicit user consent and display the full URL before opening any URL-mode elicitation target, and do not pre-fetch the URL or its metadata.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "10.4.21",
+      "text": "MCP clients open URL-mode elicitation targets so that neither the client nor the model can observe the page contents or the user's input.",
+      "level": 2,
+      "chapter": "C10",
+      "chapter_title": "Model Context Protocol (MCP) Security",
+      "section": "C10.4",
+      "section_title": "Schema, Message, and Input Validation",
+      "retired": false
+    },
+    {
+      "id": "11.1.1",
+      "text": "the model has undergone alignment and safety training or fine-tuning to prevent the model from generating disallowed content categories.",
+      "level": 1,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.1",
+      "section_title": "Model Alignment, Safety, and Robustness Testing and Training",
+      "retired": false
+    },
+    {
+      "id": "11.1.2",
+      "text": "a version-controlled alignment test suite is run on every model update or release.",
+      "level": 1,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.1",
+      "section_title": "Model Alignment, Safety, and Robustness Testing and Training",
+      "retired": false
+    },
+    {
+      "id": "11.1.3",
+      "text": "models are evaluated against known adversarial attack techniques relevant to their modality.",
+      "level": 1,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.1",
+      "section_title": "Model Alignment, Safety, and Robustness Testing and Training",
+      "retired": false
+    },
+    {
+      "id": "11.1.4",
+      "text": "models are hardened against adversarial inputs.",
+      "level": 2,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.1",
+      "section_title": "Model Alignment, Safety, and Robustness Testing and Training",
+      "retired": false
+    },
+    {
+      "id": "11.1.5",
+      "text": "an automated evaluator measures harmful-content rate and flags regressions beyond a defined threshold.",
+      "level": 3,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.1",
+      "section_title": "Model Alignment, Safety, and Robustness Testing and Training",
+      "retired": false
+    },
+    {
+      "id": "11.1.6",
+      "text": "adversarial evaluation results are reported alongside results for the same tasks, scored the same way, with no attack applied.",
+      "level": 2,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.1",
+      "section_title": "Model Alignment, Safety, and Robustness Testing and Training",
+      "retired": false
+    },
+    {
+      "id": "11.2.1",
+      "text": "model-inferred sensitive attributes are not directly returned in outputs.",
+      "level": 1,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.2",
+      "section_title": "Membership-Inference and Model-Inversion Mitigation",
+      "retired": false
+    },
+    {
+      "id": "11.2.2",
+      "text": "inference endpoints enforce per-principal and global rate limits sized to the extraction threat model, and not solely as a generic API throttle.",
+      "level": 1,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.2",
+      "section_title": "Membership-Inference and Model-Inversion Mitigation",
+      "retired": false
+    },
+    {
+      "id": "11.2.3",
+      "text": "model outputs are calibrated to reduce overconfident predictions.",
+      "level": 2,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.2",
+      "section_title": "Membership-Inference and Model-Inversion Mitigation",
+      "retired": false
+    },
+    {
+      "id": "11.2.4",
+      "text": "training on sensitive datasets employs differentially-private optimization.",
+      "level": 2,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.2",
+      "section_title": "Membership-Inference and Model-Inversion Mitigation",
+      "retired": false
+    },
+    {
+      "id": "11.2.5",
+      "text": "membership-inference attack simulations demonstrate that attack accuracy does not exceed random guessing on evaluated data.",
+      "level": 3,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.2",
+      "section_title": "Membership-Inference and Model-Inversion Mitigation",
+      "retired": false
+    },
+    {
+      "id": "11.3.1",
+      "text": "query-pattern analysis feeds an extraction-attempt detector.",
+      "level": 1,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.3",
+      "section_title": "Model-Extraction Defense",
+      "retired": false
+    },
+    {
+      "id": "11.3.2",
+      "text": "raw model outputs are not directly exposed beyond the application backend, and that externally visible responses are calibrated to the extraction risk level.",
+      "level": 2,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.3",
+      "section_title": "Model-Extraction Defense",
+      "retired": false
+    },
+    {
+      "id": "11.3.3",
+      "text": "model watermarking or fingerprinting techniques are applied so that unauthorized copies can be identified.",
+      "level": 3,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.3",
+      "section_title": "Model-Extraction Defense",
+      "retired": false
+    },
+    {
+      "id": "11.3.4",
+      "text": "detection of suspected extraction triggers response measures.",
+      "level": 3,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.3",
+      "section_title": "Model-Extraction Defense",
+      "retired": false
+    },
+    {
+      "id": "11.3.5",
+      "text": "inference endpoints constrain sampling and decoding parameters supplied by untrusted callers (e.g., temperature, top-k, top-p, logit bias, candidate/n count) to server-side approved ranges and defaults, rejecting out-of-policy values.",
+      "level": 2,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.3",
+      "section_title": "Model-Extraction Defense",
+      "retired": false
+    },
+    {
+      "id": "11.4.1",
+      "text": "inputs from external or untrusted sources pass through anomaly detection before model inference.",
+      "level": 2,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.4",
+      "section_title": "Model Runtime Anomaly Detection",
+      "retired": false
+    },
+    {
+      "id": "11.4.2",
+      "text": "inputs flagged as anomalous trigger gating actions.",
+      "level": 2,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.4",
+      "section_title": "Model Runtime Anomaly Detection",
+      "retired": false
+    },
+    {
+      "id": "11.4.3",
+      "text": "the safety violation feedback pipeline includes poisoning detection and human review gates to prevent adversarial manipulation of the improvement mechanism.",
+      "level": 3,
+      "chapter": "C11",
+      "chapter_title": "Adversarial Robustness",
+      "section": "C11.4",
+      "section_title": "Model Runtime Anomaly Detection",
+      "retired": false
+    },
+    {
+      "id": "12.1.1",
+      "text": "AI interactions are logged with session context and AI-specific telemetry.",
+      "level": 1,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.1",
+      "section_title": "Request & Response Logging",
+      "retired": false
+    },
+    {
+      "id": "12.1.2",
+      "text": "safety filtering and policy decisions are logged with sufficient detail to support audit, debugging, and forensic analysis of content moderation systems.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.1",
+      "section_title": "Request & Response Logging",
+      "retired": false
+    },
+    {
+      "id": "12.1.3",
+      "text": "log entries for AI inference events follow a structured, interoperable schema that includes at least the model identifier, token usage (input and output), provider name, and operation type.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.1",
+      "section_title": "Request & Response Logging",
+      "retired": false
+    },
+    {
+      "id": "12.1.4",
+      "text": "RAG pipeline retrieval events are logged, including the query, documents retrieved, and knowledge source.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.1",
+      "section_title": "Request & Response Logging",
+      "retired": false
+    },
+    {
+      "id": "12.2.1",
+      "text": "the system detects and alerts on known jailbreak patterns, prompt injection attempts, and adversarial inputs.",
+      "level": 1,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.2",
+      "section_title": "Detection and Alerting",
+      "retired": false
+    },
+    {
+      "id": "12.2.2",
+      "text": "behavioral anomaly detection identifies unusual conversation patterns, excessive retry attempts, or probing behaviors.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.2",
+      "section_title": "Detection and Alerting",
+      "retired": false
+    },
+    {
+      "id": "12.2.3",
+      "text": "custom rules detect AI-specific threat patterns for coordinated jailbreak attempts, prompt injection, and system prompt extraction attempts.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.2",
+      "section_title": "Detection and Alerting",
+      "retired": false
+    },
+    {
+      "id": "12.2.4",
+      "text": "extraction-alert events include offending query metadata to support investigation.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.2",
+      "section_title": "Detection and Alerting",
+      "retired": false
+    },
+    {
+      "id": "12.2.5",
+      "text": "token usage is tracked at granular attribution levels including per user, per session, per feature endpoint, and per team or workspace.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.2",
+      "section_title": "Detection and Alerting",
+      "retired": false
+    },
+    {
+      "id": "12.2.6",
+      "text": "LLM API traffic is monitored for covert-channel indicators and communication signatures to identify malware and command-and-control (C2) activity.",
+      "level": 3,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.2",
+      "section_title": "Detection and Alerting",
+      "retired": false
+    },
+    {
+      "id": "12.3.1",
+      "text": "data drift detection monitors input distribution changes that may impact model performance, using statistically validated methods matched to the input data type (e.g., KS test or PSI for tabular numeric features, embedding-distance metrics for text or image).",
+      "level": 1,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.3",
+      "section_title": "Model, Data, and Performance Drift Detection",
+      "retired": false
+    },
+    {
+      "id": "12.3.2",
+      "text": "hallucination detection monitors identify and flag model outputs that contain factually incorrect, inconsistent, or fabricated information.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.3",
+      "section_title": "Model, Data, and Performance Drift Detection",
+      "retired": false
+    },
+    {
+      "id": "12.3.3",
+      "text": "hallucination rates are tracked as continuous time-series metrics to enable trend analysis and detection of sustained model degradation.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.3",
+      "section_title": "Model, Data, and Performance Drift Detection",
+      "retired": false
+    },
+    {
+      "id": "12.3.4",
+      "text": "unexplained behavioral shifts are distinguished from gradual, expected operational drift.",
+      "level": 3,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.3",
+      "section_title": "Model, Data, and Performance Drift Detection",
+      "retired": false
+    },
+    {
+      "id": "12.4.1",
+      "text": "autonomous action triggers include proactive behavior-pattern analysis, security evaluation, and threat-landscape assessment.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.4",
+      "section_title": "Proactive Security Behavior Monitoring",
+      "retired": false
+    },
+    {
+      "id": "12.4.2",
+      "text": "audit logs capture security-critical proactive actions, including approver identity, timestamp, action parameters, and decision outcomes.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.4",
+      "section_title": "Proactive Security Behavior Monitoring",
+      "retired": false
+    },
+    {
+      "id": "12.4.3",
+      "text": "kill-switch activations and override commands are logged.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.4",
+      "section_title": "Proactive Security Behavior Monitoring",
+      "retired": false
+    },
+    {
+      "id": "12.5.1",
+      "text": "dataset lineage records each dataset and its components, including all transformations, augmentations, and merges.",
+      "level": 1,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.5",
+      "section_title": "Training Data & Model Lifecycle Audit",
+      "retired": false
+    },
+    {
+      "id": "12.5.2",
+      "text": "all labeling activities are recorded in logs.",
+      "level": 1,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.5",
+      "section_title": "Training Data & Model Lifecycle Audit",
+      "retired": false
+    },
+    {
+      "id": "12.5.3",
+      "text": "all model changes generate immutable audit records.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.5",
+      "section_title": "Training Data & Model Lifecycle Audit",
+      "retired": false
+    },
+    {
+      "id": "12.5.4",
+      "text": "every ingested document is tagged at write time with source, writer identity, and timestamp.",
+      "level": 2,
+      "chapter": "C12",
+      "chapter_title": "Monitoring, Logging & Anomaly Detection",
+      "section": "C12.5",
+      "section_title": "Training Data & Model Lifecycle Audit",
+      "retired": false
+    }
+  ]
+}
