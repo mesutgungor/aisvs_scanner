@@ -1,0 +1,2836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OWASP AISVS Verification Dashboard - /private/tmp/pydantic-ai/pydantic_ai_slim</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --card-hover: #1f242c;
+      --border: #30363d;
+      --border-focus: #58a6ff;
+      --text: #c9d1d9;
+      --text-dim: #8b949e;
+      --text-bright: #f0f6fc;
+      --pass: #238636;
+      --pass-badge: #3fb950;
+      --pass-bg: rgba(35, 134, 54, 0.18);
+      --fail: #da3633;
+      --fail-badge: #f85149;
+      --fail-bg: rgba(218, 54, 51, 0.18);
+      --gap: #d29922;
+      --gap-badge: #e3b341;
+      --gap-bg: rgba(210, 153, 34, 0.18);
+      --manual: #1f6feb;
+      --manual-badge: #58a6ff;
+      --manual-bg: rgba(31, 111, 235, 0.18);
+      --na: #484f58;
+      --na-badge: #8b949e;
+      --na-bg: rgba(110, 118, 129, 0.18);
+      --code-bg: rgba(110, 118, 129, 0.15);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .container { max-width: 1300px; margin: 0 auto; }
+    h1, h2, h3, h4 { color: var(--text-bright); }
+    
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header h1 { font-size: 1.75rem; font-weight: 700; }
+    .meta { color: var(--text-dim); font-size: 0.9rem; margin-top: 6px; }
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .tag {
+      background: rgba(56, 139, 253, 0.15);
+      color: #58a6ff;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* KPI Clickable Cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .card:hover {
+      background: var(--card-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .card.active {
+      border-color: var(--text-bright);
+      box-shadow: 0 0 0 2px var(--border-focus);
+    }
+    .card .label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+    }
+    .card .val {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin: 8px 0 4px;
+    }
+    .card.pass .val { color: var(--pass-badge); }
+    .card.fail .val { color: var(--fail-badge); }
+    .card.gap .val { color: var(--gap-badge); }
+    .card.manual .val { color: var(--manual-badge); }
+    .card.na .val { color: var(--na-badge); }
+    .card .hint {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    /* Section Titles & Counters */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 32px 0 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .counter-badge {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* Filter Controls Bar */
+    .filter-bar {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .filter-bar input[type="text"] {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      color: var(--text-bright);
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      min-width: 220px;
+      flex: 1;
+    }
+    .filter-bar select {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    .filter-bar input[type="text"]:focus, .filter-bar select:focus {
+      outline: none;
+      border-color: var(--border-focus);
+    }
+    .btn {
+      background: rgba(110, 118, 129, 0.2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn:hover { background: rgba(110, 118, 129, 0.35); color: var(--text-bright); }
+    .btn.active {
+      background: var(--border-focus);
+      color: #ffffff;
+      border-color: var(--border-focus);
+      font-weight: 600;
+    }
+
+    .pill-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      font-size: 0.88rem;
+    }
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #1c2128;
+      color: var(--text-bright);
+      font-weight: 600;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(255, 255, 255, 0.025); }
+    
+    /* Status & Severity Badges */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+    .badge.critical { background: rgba(248, 81, 73, 0.25); color: #ff7b72; border: 1px solid rgba(248, 81, 73, 0.4); }
+    .badge.high { background: var(--fail-bg); color: var(--fail-badge); border: 1px solid rgba(248, 81, 73, 0.3); }
+    .badge.medium { background: var(--gap-bg); color: var(--gap-badge); border: 1px solid rgba(227, 179, 65, 0.3); }
+    .badge.low { background: rgba(56, 139, 253, 0.18); color: #58a6ff; border: 1px solid rgba(56, 139, 253, 0.3); }
+    .badge.info { background: var(--na-bg); color: var(--na-badge); }
+
+    .badge.pass { background: var(--pass-bg); color: var(--pass-badge); border: 1px solid rgba(63, 185, 80, 0.3); }
+    .badge.fail { background: var(--fail-bg); color: var(--fail-badge); border: 1px solid rgba(248, 81, 73, 0.3); }
+    .badge.gap { background: var(--gap-bg); color: var(--gap-badge); border: 1px solid rgba(227, 179, 65, 0.3); }
+    .badge.manual { background: var(--manual-bg); color: var(--manual-badge); border: 1px solid rgba(88, 166, 255, 0.3); }
+    .badge.na { background: var(--na-bg); color: var(--na-badge); }
+
+    code {
+      background: var(--code-bg);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      color: #ff7b72;
+    }
+    .loc-code { color: #79c0ff; }
+
+    /* Expandable finding row */
+    .finding-row { cursor: pointer; }
+    .finding-details {
+      display: none;
+      background: #0d1117;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 18px;
+    }
+    .finding-details.show { display: table-row; }
+    .details-content {
+      padding: 10px 14px;
+      background: #161b22;
+      border-left: 3px solid var(--border-focus);
+      border-radius: 0 6px 6px 0;
+      margin: 4px 0;
+    }
+    .snippet-box {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #e3b341;
+      overflow-x: auto;
+      margin: 8px 0;
+    }
+    .fix-box {
+      color: #3fb950;
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>OWASP AISVS Verification Dashboard</h1>
+        <div class="meta">
+          Standard: <strong>OWASP AISVS v1.01</strong> (Max Level 2) &nbsp;|&nbsp; 
+          Target: <code>/private/tmp/pydantic-ai/pydantic_ai_slim</code> &nbsp;|&nbsp; 
+          Scanned 486 files in 73.76s
+        </div>
+        <div class="tags">
+          <span class="tag">AI: agent</span>
+          <span class="tag">AI: llm</span>
+          <span class="tag">AI: mcp_client</span>
+          <span class="tag">AI: mcp_server</span>
+          <span class="tag">AI: media_generation</span>
+          <span class="tag">AI: model_loading</span>
+          <span class="tag">AI: multimodal</span>
+          <span class="tag">AI: rag</span>
+          <span class="tag">AI: serving</span>
+        </div>
+      </div>
+      <div>
+        <button class="btn" onclick="resetAllFilters()">↺ Reset All Filters</button>
+      </div>
+    </div>
+
+    <!-- Clickable Interactive KPI Summary Cards -->
+    <div class="cards">
+      <div class="card pass" id="kpi-pass" onclick="toggleStatusFilter('PASS')">
+        <div class="label">PASS</div>
+        <div class="val">78</div>
+        <div class="hint">Verified defenses &bull; Click to filter</div>
+      </div>
+      <div class="card fail" id="kpi-fail" onclick="toggleStatusFilter('FAIL')">
+        <div class="label">FAIL</div>
+        <div class="val">6</div>
+        <div class="hint">Actionable violations &bull; Click to filter</div>
+      </div>
+      <div class="card gap" id="kpi-gap" onclick="toggleStatusFilter('GAP')">
+        <div class="label">GAP</div>
+        <div class="val">59</div>
+        <div class="hint">Missing controls &bull; Click to filter</div>
+      </div>
+      <div class="card manual" id="kpi-manual" onclick="toggleStatusFilter('MANUAL')">
+        <div class="label">MANUAL</div>
+        <div class="val">7</div>
+        <div class="hint">Requires human review &bull; Click to filter</div>
+      </div>
+      <div class="card na" id="kpi-na" onclick="toggleStatusFilter('N/A')">
+        <div class="label">N/A</div>
+        <div class="val">17</div>
+        <div class="hint">Not applicable &bull; Click to filter</div>
+      </div>
+    </div>
+
+    <!-- Section 1: Actionable Findings -->
+    <div class="section-header">
+      <h2>Actionable Findings</h2>
+      <span class="counter-badge" id="findingsCounter">Showing 9 of 9</span>
+    </div>
+
+    <!-- Dynamic Filter Bar for Findings -->
+    <div class="filter-bar">
+      <input type="text" id="findingSearch" placeholder="Filter findings by rule, title, code, file, or keyword..." oninput="filterFindings()">
+      
+      <select id="findingSeverityFilter" onchange="filterFindings()">
+        <option value="">All Severities</option>
+        <option value="CRITICAL">Critical</option>
+        <option value="HIGH">High</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="LOW">Low</option>
+        <option value="INFO">Info</option>
+      </select>
+
+      <select id="findingChapterFilter" onchange="filterFindings()">
+        <option value="">All Chapters</option>
+        <option value="C1">C1: Training Data Integrity & Traceability</option>
+        <option value="C2">C2: Input Validation & Prompt Injection</option>
+        <option value="C3">C3: Model Lifecycle Management</option>
+        <option value="C4">C4: Infrastructure & Sandboxing</option>
+        <option value="C5">C5: Access Control & Identity</option>
+        <option value="C6">C6: Supply Chain & AI BOM</option>
+        <option value="C7">C7: Model Behavior & Output Safety</option>
+        <option value="C8">C8: Memory, Embeddings & Vector DB</option>
+        <option value="C9">C9: Orchestration & Agentic Action</option>
+        <option value="C10">C10: Model Context Protocol (MCP)</option>
+        <option value="C11">C11: Adversarial Robustness</option>
+        <option value="C12">C12: Monitoring & Logging</option>
+      </select>
+
+      <div class="pill-group">
+        <button class="btn active" id="f-pill-all" onclick="setFindingSeverityQuick('')">All</button>
+        <button class="btn" id="f-pill-crit-high" onclick="setFindingSeverityQuick('HIGH_PLUS')">Critical & High</button>
+        <button class="btn" id="f-pill-mcp" onclick="setFindingChapterQuick('C10')">MCP Only (C10)</button>
+        <button class="btn" id="f-pill-agent" onclick="setFindingChapterQuick('C9')">Agents (C9)</button>
+      </div>
+    </div>
+
+    <table id="findingsTable">
+      <thead>
+        <tr>
+          <th style="width: 100px;">Severity</th>
+          <th style="width: 160px;">Rule</th>
+          <th>Title & Details (Click row to expand)</th>
+          <th style="width: 250px;">Location</th>
+          <th style="width: 120px;">AISVS Controls</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="finding-row" id="frow-1" onclick="toggleFindingDetails(1)"
+            data-severity="LOW"
+            data-chapters="C7"
+            data-search="ais-output-003 markdown rendering of model output without sanitization rendered markdown can embed tracking images / links controlled by injected content (`markdown(content`) pydantic_ai/_cli/__init__.py console.print(markdown(content, code_theme=code_theme)) 7.3.3, 7.3.4">
+          <td><span class="badge low">LOW</span></td>
+          <td><code>AIS-OUTPUT-003</code></td>
+          <td>
+            <strong>Markdown rendering of model output without sanitization</strong>
+            <div style="color:var(--text-dim); font-size:0.82rem; margin-top:2px;">Rendered markdown can embed tracking images / links controlled by injected content (`Markdown(content`)</div>
+          </td>
+          <td><span class="loc-code"><code>pydantic_ai/_cli/__init__.py:585</code></span></td>
+          <td><strong>7.3.3, 7.3.4</strong></td>
+        </tr>
+        <tr class="finding-details" id="fdet-1">
+          <td colspan="5">
+            <div class="details-content">
+              <div><strong>Confidence:</strong> Low &nbsp;|&nbsp; <strong>AISVS Requirements:</strong> 7.3.3, 7.3.4</div>
+              <div style="margin-top:6px; font-size:0.82rem; color:var(--text-dim);">Code Snippet:</div>
+              <div class="snippet-box">console.print(Markdown(content, code_theme=code_theme))</div>
+              <div class="fix-box"><strong>Remediation:</strong> Sanitize rendered HTML and disable remote image loading or allow-list domains.</div>
+            </div>
+          </td>
+        </tr>
+        <tr class="finding-row" id="frow-2" onclick="toggleFindingDetails(2)"
+            data-severity="LOW"
+            data-chapters="C7"
+            data-search="ais-output-003 markdown rendering of model output without sanitization rendered markdown can embed tracking images / links controlled by injected content (`markdown(&#x27;\n\n&#x27;.join([*self.content_pieces, content`) pydantic_ai/_cli/__init__.py self.live.update(markdown(&#x27;\n\n&#x27;.join([*self.content_pieces, content]), code_theme=self.code_theme)) 7.3.3, 7.3.4">
+          <td><span class="badge low">LOW</span></td>
+          <td><code>AIS-OUTPUT-003</code></td>
+          <td>
+            <strong>Markdown rendering of model output without sanitization</strong>
+            <div style="color:var(--text-dim); font-size:0.82rem; margin-top:2px;">Rendered markdown can embed tracking images / links controlled by injected content (`Markdown(&#x27;\n\n&#x27;.join([*self.content_pieces, content`)</div>
+          </td>
+          <td><span class="loc-code"><code>pydantic_ai/_cli/__init__.py:646</code></span></td>
+          <td><strong>7.3.3, 7.3.4</strong></td>
+        </tr>
+        <tr class="finding-details" id="fdet-2">
+          <td colspan="5">
+            <div class="details-content">
+              <div><strong>Confidence:</strong> Low &nbsp;|&nbsp; <strong>AISVS Requirements:</strong> 7.3.3, 7.3.4</div>
+              <div style="margin-top:6px; font-size:0.82rem; color:var(--text-dim);">Code Snippet:</div>
+              <div class="snippet-box">self.live.update(Markdown(&#x27;\n\n&#x27;.join([*self.content_pieces, content]), code_theme=self.code_theme))</div>
+              <div class="fix-box"><strong>Remediation:</strong> Sanitize rendered HTML and disable remote image loading or allow-list domains.</div>
+            </div>
+          </td>
+        </tr>
+        <tr class="finding-row" id="frow-3" onclick="toggleFindingDetails(3)"
+            data-severity="LOW"
+            data-chapters="C2"
+            data-search="ais-prompt-003 input truncated instead of rejected silent truncation of over-long prompts can cut off safety instructions or hide payloads (`truncate = &#x27;end&#x27;`) pydantic_ai/embeddings/bedrock.py truncate = &#x27;end&#x27; 2.1.4">
+          <td><span class="badge low">LOW</span></td>
+          <td><code>AIS-PROMPT-003</code></td>
+          <td>
+            <strong>Input truncated instead of rejected</strong>
+            <div style="color:var(--text-dim); font-size:0.82rem; margin-top:2px;">Silent truncation of over-long prompts can cut off safety instructions or hide payloads (`truncate = &#x27;END&#x27;`)</div>
+          </td>
+          <td><span class="loc-code"><code>pydantic_ai/embeddings/bedrock.py:425</code></span></td>
+          <td><strong>2.1.4</strong></td>
+        </tr>
+        <tr class="finding-details" id="fdet-3">
+          <td colspan="5">
+            <div class="details-content">
+              <div><strong>Confidence:</strong> Low &nbsp;|&nbsp; <strong>AISVS Requirements:</strong> 2.1.4</div>
+              <div style="margin-top:6px; font-size:0.82rem; color:var(--text-dim);">Code Snippet:</div>
+              <div class="snippet-box">truncate = &#x27;END&#x27;</div>
+              <div class="fix-box"><strong>Remediation:</strong> Reject over-limit inputs with an explicit error before they reach the model.</div>
+            </div>
+          </td>
+        </tr>
+        <tr class="finding-row" id="frow-4" onclick="toggleFindingDetails(4)"
+            data-severity="LOW"
+            data-chapters="C2"
+            data-search="ais-prompt-003 input truncated instead of rejected silent truncation of over-long prompts can cut off safety instructions or hide payloads (`truncate = &#x27;end&#x27;`) pydantic_ai/embeddings/cohere.py truncate = &#x27;end&#x27; 2.1.4">
+          <td><span class="badge low">LOW</span></td>
+          <td><code>AIS-PROMPT-003</code></td>
+          <td>
+            <strong>Input truncated instead of rejected</strong>
+            <div style="color:var(--text-dim); font-size:0.82rem; margin-top:2px;">Silent truncation of over-long prompts can cut off safety instructions or hide payloads (`truncate = &#x27;END&#x27;`)</div>
+          </td>
+          <td><span class="loc-code"><code>pydantic_ai/embeddings/cohere.py:211</code></span></td>
+          <td><strong>2.1.4</strong></td>
+        </tr>
+        <tr class="finding-details" id="fdet-4">
+          <td colspan="5">
+            <div class="details-content">
+              <div><strong>Confidence:</strong> Low &nbsp;|&nbsp; <strong>AISVS Requirements:</strong> 2.1.4</div>
+              <div style="margin-top:6px; font-size:0.82rem; color:var(--text-dim);">Code Snippet:</div>
+              <div class="snippet-box">truncate = &#x27;END&#x27;</div>
+              <div class="fix-box"><strong>Remediation:</strong> Reject over-limit inputs with an explicit error before they reach the model.</div>
+            </div>
+          </td>
+        </tr>
+        <tr class="finding-row" id="frow-5" onclick="toggleFindingDetails(5)"
+            data-severity="LOW"
+            data-chapters="C6"
+            data-search="ais-supply-001 model/dataset download without revision pinning hub artifacts resolved by branch name are mutable; a compromised/updated upstream is silently pulled (`sentencetransformer`) pydantic_ai/embeddings/sentence_transformers.py st_model = sentencetransformer(&#x27;qwen/qwen3-embedding-0.6b&#x27;) 6.1.2, 6.1.3">
+          <td><span class="badge low">LOW</span></td>
+          <td><code>AIS-SUPPLY-001</code></td>
+          <td>
+            <strong>Model/dataset download without revision pinning</strong>
+            <div style="color:var(--text-dim); font-size:0.82rem; margin-top:2px;">Hub artifacts resolved by branch name are mutable; a compromised/updated upstream is silently pulled (`SentenceTransformer`)</div>
+          </td>
+          <td><span class="loc-code"><code>pydantic_ai/embeddings/sentence_transformers.py:80</code></span></td>
+          <td><strong>6.1.2, 6.1.3</strong></td>
+        </tr>
+        <tr class="finding-details" id="fdet-5">
+          <td colspan="5">
+            <div class="details-content">
+              <div><strong>Confidence:</strong> Low &nbsp;|&nbsp; <strong>AISVS Requirements:</strong> 6.1.2, 6.1.3</div>
+              <div style="margin-top:6px; font-size:0.82rem; color:var(--text-dim);">Code Snippet:</div>
+              <div class="snippet-box">st_model = SentenceTransformer(&#x27;Qwen/Qwen3-Embedding-0.6B&#x27;)</div>
+              <div class="fix-box"><strong>Remediation:</strong> Pin `revision=&lt;commit-sha&gt;` for every third-party model/dataset and verify its hash.</div>
+            </div>
+          </td>
+        </tr>
+        <tr class="finding-row" id="frow-6" onclick="toggleFindingDetails(6)"
+            data-severity="MEDIUM"
+            data-chapters="C9 C7"
+            data-search="ais-taint-llm-net llm output flows into outbound network request untrusted model output reaches `client.files.delete` (outbound network request) without validation pydantic_ai/models/_openai_batch.py await client.files.delete(file.id) 7.3.3, 9.3.7">
+          <td><span class="badge medium">MEDIUM</span></td>
+          <td><code>AIS-TAINT-LLM-NET</code></td>
+          <td>
+            <strong>LLM output flows into outbound network request</strong>
+            <div style="color:var(--text-dim); font-size:0.82rem; margin-top:2px;">Untrusted model output reaches `client.files.delete` (outbound network request) without validation</div>
+          </td>
+          <td><span class="loc-code"><code>pydantic_ai/models/_openai_batch.py:199</code></span></td>
+          <td><strong>7.3.3, 9.3.7</strong></td>
+        </tr>
+        <tr class="finding-details" id="fdet-6">
+          <td colspan="5">
+            <div class="details-content">
+              <div><strong>Confidence:</strong> Medium &nbsp;|&nbsp; <strong>AISVS Requirements:</strong> 7.3.3, 9.3.7</div>
+              <div style="margin-top:6px; font-size:0.82rem; color:var(--text-dim);">Code Snippet:</div>
+              <div class="snippet-box">await client.files.delete(file.id)</div>
+              <div class="fix-box"><strong>Remediation:</strong> Treat model output as untrusted: validate against a schema/allow-list, use parameterized APIs, and isolate execution.</div>
+            </div>
+          </td>
+        </tr>
+        <tr class="finding-row" id="frow-7" onclick="toggleFindingDetails(7)"
+            data-severity="LOW"
+            data-chapters="C6"
+            data-search="ais-supply-001 model/dataset download without revision pinning hub artifacts resolved by branch name are mutable; a compromised/updated upstream is silently pulled (`pipeline`) pydantic_ai/realtime/elevenlabs_agents.py elevenlabs agents runs a cascaded pipeline (realtime asr + a configurable llm + elevenlabs tts + a 6.1.2, 6.1.3">
+          <td><span class="badge low">LOW</span></td>
+          <td><code>AIS-SUPPLY-001</code></td>
+          <td>
+            <strong>Model/dataset download without revision pinning</strong>
+            <div style="color:var(--text-dim); font-size:0.82rem; margin-top:2px;">Hub artifacts resolved by branch name are mutable; a compromised/updated upstream is silently pulled (`pipeline`)</div>
+          </td>
+          <td><span class="loc-code"><code>pydantic_ai/realtime/elevenlabs_agents.py:3</code></span></td>
+          <td><strong>6.1.2, 6.1.3</strong></td>
+        </tr>
+        <tr class="finding-details" id="fdet-7">
+          <td colspan="5">
+            <div class="details-content">
+              <div><strong>Confidence:</strong> Low &nbsp;|&nbsp; <strong>AISVS Requirements:</strong> 6.1.2, 6.1.3</div>
+              <div style="margin-top:6px; font-size:0.82rem; color:var(--text-dim);">Code Snippet:</div>
+              <div class="snippet-box">ElevenLabs Agents runs a cascaded pipeline (realtime ASR + a configurable LLM + ElevenLabs TTS + a</div>
+              <div class="fix-box"><strong>Remediation:</strong> Pin `revision=&lt;commit-sha&gt;` for every third-party model/dataset and verify its hash.</div>
+            </div>
+          </td>
+        </tr>
+        <tr class="finding-row" id="frow-8" onclick="toggleFindingDetails(8)"
+            data-severity="MEDIUM"
+            data-chapters="C2"
+            data-search="ais-prompt-002 special-token injection allowed in tokenizer user text containing reserved tokens (e.g. &lt;|im_start|&gt;) is parsed as control tokens (`allowed_special=&#x27;all&#x27;`) pydantic_ai/realtime/openai_live.py cost = len(encoding.encode(text, allowed_special=&#x27;all&#x27;)) + _seed_item_token_overhead 2.1.7">
+          <td><span class="badge medium">MEDIUM</span></td>
+          <td><code>AIS-PROMPT-002</code></td>
+          <td>
+            <strong>Special-token injection allowed in tokenizer</strong>
+            <div style="color:var(--text-dim); font-size:0.82rem; margin-top:2px;">User text containing reserved tokens (e.g. &lt;|im_start|&gt;) is parsed as control tokens (`allowed_special=&#x27;all&#x27;`)</div>
+          </td>
+          <td><span class="loc-code"><code>pydantic_ai/realtime/openai_live.py:607</code></span></td>
+          <td><strong>2.1.7</strong></td>
+        </tr>
+        <tr class="finding-details" id="fdet-8">
+          <td colspan="5">
+            <div class="details-content">
+              <div><strong>Confidence:</strong> Low &nbsp;|&nbsp; <strong>AISVS Requirements:</strong> 2.1.7</div>
+              <div style="margin-top:6px; font-size:0.82rem; color:var(--text-dim);">Code Snippet:</div>
+              <div class="snippet-box">cost = len(encoding.encode(text, allowed_special=&#x27;all&#x27;)) + _SEED_ITEM_TOKEN_OVERHEAD</div>
+              <div class="fix-box"><strong>Remediation:</strong> Encode reserved tokens as literal text for untrusted input (tiktoken disallowed_special=&#x27;all&#x27;).</div>
+            </div>
+          </td>
+        </tr>
+        <tr class="finding-row" id="frow-9" onclick="toggleFindingDetails(9)"
+            data-severity="MEDIUM"
+            data-chapters="C2"
+            data-search="ais-prompt-002 special-token injection allowed in tokenizer user text containing reserved tokens (e.g. &lt;|im_start|&gt;) is parsed as control tokens (`allowed_special=&#x27;all&#x27;`) pydantic_ai/realtime/openai_live.py tokens = len(encoding.encode(text, allowed_special=&#x27;all&#x27;)) 2.1.7">
+          <td><span class="badge medium">MEDIUM</span></td>
+          <td><code>AIS-PROMPT-002</code></td>
+          <td>
+            <strong>Special-token injection allowed in tokenizer</strong>
+            <div style="color:var(--text-dim); font-size:0.82rem; margin-top:2px;">User text containing reserved tokens (e.g. &lt;|im_start|&gt;) is parsed as control tokens (`allowed_special=&#x27;all&#x27;`)</div>
+          </td>
+          <td><span class="loc-code"><code>pydantic_ai/realtime/openai_live.py:2253</code></span></td>
+          <td><strong>2.1.7</strong></td>
+        </tr>
+        <tr class="finding-details" id="fdet-9">
+          <td colspan="5">
+            <div class="details-content">
+              <div><strong>Confidence:</strong> Low &nbsp;|&nbsp; <strong>AISVS Requirements:</strong> 2.1.7</div>
+              <div style="margin-top:6px; font-size:0.82rem; color:var(--text-dim);">Code Snippet:</div>
+              <div class="snippet-box">tokens = len(encoding.encode(text, allowed_special=&#x27;all&#x27;))</div>
+              <div class="fix-box"><strong>Remediation:</strong> Encode reserved tokens as literal text for untrusted input (tiktoken disallowed_special=&#x27;all&#x27;).</div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Section 2: Requirements Matrix -->
+    <div class="section-header">
+      <h2>Requirements Verification Checklist</h2>
+      <span class="counter-badge" id="reqsCounter">Showing 0 of 0</span>
+    </div>
+
+    <!-- Dynamic Filter Bar for Requirements -->
+    <div class="filter-bar">
+      <input type="text" id="reqSearch" placeholder="Search requirements text, ID, or control note..." oninput="filterRequirements()">
+      
+      <select id="reqStatusFilter" onchange="filterRequirements()">
+        <option value="">All Statuses</option>
+        <option value="FAIL">FAIL (Violations)</option>
+        <option value="PASS">PASS (Verified)</option>
+        <option value="GAP">GAP (Missing)</option>
+        <option value="MANUAL">MANUAL (Human review)</option>
+        <option value="N/A">N/A (Not Applicable)</option>
+      </select>
+
+      <select id="reqChapterFilter" onchange="filterRequirements()">
+        <option value="">All Chapters</option>
+        <option value="C1">C1: Training Data Integrity & Traceability</option>
+        <option value="C2">C2: Input Validation & Prompt Injection (2 FAIL)</option>
+        <option value="C3">C3: Model Lifecycle Management</option>
+        <option value="C4">C4: Infrastructure & Sandboxing</option>
+        <option value="C5">C5: Access Control & Identity</option>
+        <option value="C6">C6: Supply Chain & AI BOM (2 FAIL)</option>
+        <option value="C7">C7: Model Behavior & Output Safety (1 FAIL)</option>
+        <option value="C8">C8: Memory, Embeddings & Vector DB</option>
+        <option value="C9">C9: Orchestration & Agentic Action (1 FAIL)</option>
+        <option value="C10">C10: Model Context Protocol (MCP)</option>
+        <option value="C11">C11: Adversarial Robustness</option>
+        <option value="C12">C12: Monitoring & Logging</option>
+      </select>
+
+      <select id="reqLevelFilter" onchange="filterRequirements()">
+        <option value="">All Levels</option>
+        <option value="1">Level 1 (Foundational)</option>
+        <option value="2">Level 2 (Hardened)</option>
+        <option value="3">Level 3 (Advanced)</option>
+      </select>
+    </div>
+
+    <table id="reqsTable">
+      <thead>
+        <tr>
+          <th style="width: 80px;">ID</th>
+          <th style="width: 70px;">Level</th>
+          <th style="width: 80px;">Chapter</th>
+          <th>Requirement Description</th>
+          <th style="width: 110px;">Status</th>
+          <th style="width: 280px;">Verification Evidence / Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C1"
+            data-level="1"
+            data-search="1.1.1 c1 training data includes only features, attributes, and fields required for the model&#x27;s stated purpose. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>1.1.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C1</strong></td>
+          <td>training data includes only features, attributes, and fields required for the model&#x27;s stated purpose.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C1"
+            data-level="2"
+            data-search="1.1.2 c1 an up-to-date inventory is kept of every training-data source, including its origin, responsible party, license, collection method, intended use constraints, and processing history. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>1.1.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C1</strong></td>
+          <td>an up-to-date inventory is kept of every training-data source, including its origin, responsible party, license, collection method, intended use constraints, and processing history.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C1"
+            data-level="2"
+            data-search="1.1.3 c1 data integrity is provided when training data is stored and transferred. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>1.1.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C1</strong></td>
+          <td>data integrity is provided when training data is stored and transferred.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C1"
+            data-level="2"
+            data-search="1.1.4 c1 integrity monitoring is applied to guard against unauthorized modifications or corruption of training data. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>1.1.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C1</strong></td>
+          <td>integrity monitoring is applied to guard against unauthorized modifications or corruption of training data.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C1"
+            data-level="1"
+            data-search="1.2.1 c1 labeling platforms enforce access controls that restrict who can create, modify, or approve annotations. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>1.2.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C1</strong></td>
+          <td>labeling platforms enforce access controls that restrict who can create, modify, or approve annotations.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C1"
+            data-level="2"
+            data-search="1.2.2 c1 cryptographic integrity is applied to labeling artifacts. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>1.2.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C1</strong></td>
+          <td>cryptographic integrity is applied to labeling artifacts.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C1"
+            data-level="2"
+            data-search="1.2.3 c1 sensitive information in labels is redacted, anonymized, or encrypted before being used in any labeling artifact. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>1.2.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C1</strong></td>
+          <td>sensitive information in labels is redacted, anonymized, or encrypted before being used in any labeling artifact.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C1"
+            data-level="2"
+            data-search="1.3.1 c1 training and fine-tuning pipelines implement poisoning detection techniques to identify potential data poisoning or unintentional corruption in training data. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>1.3.1</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C1</strong></td>
+          <td>training and fine-tuning pipelines implement poisoning detection techniques to identify potential data poisoning or unintentional corruption in training data.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C1"
+            data-level="2"
+            data-search="1.3.2 c1 automatically generated labels are subject to confidence thresholds and consistency checks to detect misleading or low-confidence labels. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>1.3.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C1</strong></td>
+          <td>automatically generated labels are subject to confidence thresholds and consistency checks to detect misleading or low-confidence labels.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C1"
+            data-level="2"
+            data-search="1.3.3 c1 models used in security-relevant decisions are evaluated for bias patterns. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>1.3.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C1</strong></td>
+          <td>models used in security-relevant decisions are evaluated for bias patterns.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C1"
+            data-level="2"
+            data-search="1.3.4 c1 disallowed content is detected and removed before training. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>1.3.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C1</strong></td>
+          <td>disallowed content is detected and removed before training.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C2"
+            data-level="1"
+            data-search="2.1.1 c2 input normalization is applied before tokenization or embedding. no verified automated control or indicator detected">
+          <td><strong>2.1.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C2</strong></td>
+          <td>input normalization is applied before tokenization or embedding.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C2"
+            data-level="1"
+            data-search="2.1.2 c2 encoding and representation smuggling in inputs is detected and mitigated. approved mitigations include canonicalization, strict schema validation, policy-based rejection, or explicit marking. no verified automated control or indicator detected">
+          <td><strong>2.1.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C2</strong></td>
+          <td>encoding and representation smuggling in inputs is detected and mitigated. Approved mitigations include canonicalization, strict schema validation, policy-based rejection, or explicit marking.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C2"
+            data-level="1"
+            data-search="2.1.3 c2 all inputs that could steer model behavior are treated as untrusted and screened by a prompt injection detection ruleset or classifier, with flagged inputs blocked. 4 indicator(s) of defense control verified">
+          <td><strong>2.1.3</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C2</strong></td>
+          <td>all inputs that could steer model behavior are treated as untrusted and screened by a prompt injection detection ruleset or classifier, with flagged inputs blocked.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">4 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="FAIL"
+            data-chapter="C2"
+            data-level="1"
+            data-search="2.1.4 c2 input length controls prevent content from exceeding the context window. the controls must reject inputs that exceed token limits rather than truncating them. 2 security weakness(es) identified">
+          <td><strong>2.1.4</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C2</strong></td>
+          <td>input length controls prevent content from exceeding the context window. The controls must reject inputs that exceed token limits rather than truncating them.</td>
+          <td><span class="badge fail">FAIL</span></td>
+          <td><small style="color:var(--text-dim)">2 security weakness(es) identified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C2"
+            data-level="1"
+            data-search="2.1.5 c2 the system implements a character set restriction for all inputs. the restriction must use an allow-list approach derived from the languages and use cases the system supports, permitting only characters that are explicitly required. 1 indicator(s) of defense control verified">
+          <td><strong>2.1.5</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C2</strong></td>
+          <td>the system implements a character set restriction for all inputs. The restriction must use an allow-list approach derived from the languages and use cases the system supports, permitting only characters that are explicitly required.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">1 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C2"
+            data-level="2"
+            data-search="2.1.6 c2 the system enforces an instruction hierarchy in which system and developer messages override user instructions and other untrusted inputs, even after user instructions have been processed. untrusted content cannot acquire higher instruction priority through retrieval, tool processing, or persistence across conversation turns. 44 indicator(s) of defense control verified">
+          <td><strong>2.1.6</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C2</strong></td>
+          <td>the system enforces an instruction hierarchy in which system and developer messages override user instructions and other untrusted inputs, even after user instructions have been processed. Untrusted content cannot acquire higher instruction priority through retrieval, tool processing, or persistence across conversation turns.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">44 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="FAIL"
+            data-chapter="C2"
+            data-level="2"
+            data-search="2.1.7 c2 reserved special tokens are encoded as literal characters and cannot be injected into the model context. 2 security weakness(es) identified">
+          <td><strong>2.1.7</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C2</strong></td>
+          <td>reserved special tokens are encoded as literal characters and cannot be injected into the model context.</td>
+          <td><span class="badge fail">FAIL</span></td>
+          <td><small style="color:var(--text-dim)">2 security weakness(es) identified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C2"
+            data-level="1"
+            data-search="2.2.1 c2 every prompt is scored by a content classifier for violence, self-harm, hate, and sexual content against configurable thresholds. prompts that exceed those thresholds are rejected or sanitized before reaching the model context. 16 indicator(s) of defense control verified">
+          <td><strong>2.2.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C2</strong></td>
+          <td>every prompt is scored by a content classifier for violence, self-harm, hate, and sexual content against configurable thresholds. Prompts that exceed those thresholds are rejected or sanitized before reaching the model context.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">16 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C2"
+            data-level="1"
+            data-search="2.2.2 c2 prompt content classification is evaluated for unsupported languages. 16 indicator(s) of defense control verified">
+          <td><strong>2.2.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C2</strong></td>
+          <td>prompt content classification is evaluated for unsupported languages.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">16 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C2"
+            data-level="2"
+            data-search="2.2.3 c2 non-text inputs (image/video/audio) are checked for adversarial perturbations, steganographic payloads, hidden or embedded content, or known attack patterns. no verified automated control or indicator detected">
+          <td><strong>2.2.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C2</strong></td>
+          <td>non-text inputs (image/video/audio) are checked for adversarial perturbations, steganographic payloads, hidden or embedded content, or known attack patterns.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C3"
+            data-level="1"
+            data-search="3.1.1 c3 a model registry maintains an inventory of all deployed model artifacts and their origin. 10 indicator(s) of defense control verified">
+          <td><strong>3.1.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C3</strong></td>
+          <td>a model registry maintains an inventory of all deployed model artifacts and their origin.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">10 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C3"
+            data-level="2"
+            data-search="3.1.2 c3 all model artifacts (weights, configurations, tokenizers, base models, fine-tunes, adapters, and safety/policy models) are cryptographically signed by authorized entities. no verified automated control or indicator detected">
+          <td><strong>3.1.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C3</strong></td>
+          <td>all model artifacts (weights, configurations, tokenizers, base models, fine-tunes, adapters, and safety/policy models) are cryptographically signed by authorized entities.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C3"
+            data-level="2"
+            data-search="3.1.3 c3 model cryptographic signatures are verified at deployment admission and on load. 17 indicator(s) of defense control verified">
+          <td><strong>3.1.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C3</strong></td>
+          <td>model cryptographic signatures are verified at deployment admission and on load.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">17 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C3"
+            data-level="1"
+            data-search="3.2.1 c3 models undergo automated input validation testing, safety evaluation testing, and output sanitization testing before deployment. no verified automated control or indicator detected">
+          <td><strong>3.2.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C3</strong></td>
+          <td>models undergo automated input validation testing, safety evaluation testing, and output sanitization testing before deployment.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C3"
+            data-level="2"
+            data-search="3.2.2 c3 models subjected to post-training quantization are re-evaluated against the same safety and alignment test suite on the compressed artifact before deployment. no verified automated control or indicator detected">
+          <td><strong>3.2.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C3</strong></td>
+          <td>models subjected to post-training quantization are re-evaluated against the same safety and alignment test suite on the compressed artifact before deployment.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C3"
+            data-level="2"
+            data-search="3.3.1 c3 production deployments implement rollout mechanisms with automated rollback triggers. 2 indicator(s) of defense control verified">
+          <td><strong>3.3.1</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C3</strong></td>
+          <td>production deployments implement rollout mechanisms with automated rollback triggers.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">2 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C3"
+            data-level="2"
+            data-search="3.3.2 c3 rollback capabilities restore the complete model state. no verified automated control or indicator detected">
+          <td><strong>3.3.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C3</strong></td>
+          <td>rollback capabilities restore the complete model state.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C3"
+            data-level="2"
+            data-search="3.3.3 c3 model versions running in parallel use isolated runtime state so that ai-specific shared resources are not shared across deployments. no verified automated control or indicator detected">
+          <td><strong>3.3.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C3</strong></td>
+          <td>model versions running in parallel use isolated runtime state so that AI-specific shared resources are not shared across deployments.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="MANUAL"
+            data-chapter="C3"
+            data-level="1"
+            data-search="3.4.1 c3 ai-specific runtime components are not shared across environment boundaries (e.g., development, staging, production). manual process/architectural review required">
+          <td><strong>3.4.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C3</strong></td>
+          <td>AI-specific runtime components are not shared across environment boundaries (e.g., development, staging, production).</td>
+          <td><span class="badge manual">MANUAL</span></td>
+          <td><small style="color:var(--text-dim)">Manual process/architectural review required</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C3"
+            data-level="2"
+            data-search="3.4.2 c3 model training and fine-tuning environments are isolated from production environments. no verified automated control or indicator detected">
+          <td><strong>3.4.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C3</strong></td>
+          <td>model training and fine-tuning environments are isolated from production environments.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C3"
+            data-level="2"
+            data-search="3.5.1 c3 models used in rlhf fine-tuning are versioned and integrity-verified before use in a training run. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>3.5.1</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C3</strong></td>
+          <td>models used in RLHF fine-tuning are versioned and integrity-verified before use in a training run.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C4"
+            data-level="1"
+            data-search="4.1.1 c4 ai models execute in isolated sandboxes. 5 indicator(s) of defense control verified">
+          <td><strong>4.1.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C4</strong></td>
+          <td>AI models execute in isolated sandboxes.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">5 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C4"
+            data-level="1"
+            data-search="4.1.2 c4 model artifact loading enforces an explicit allow-list of serialization formats that do not permit arbitrary code execution during deserialization. no verified automated control or indicator detected">
+          <td><strong>4.1.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C4</strong></td>
+          <td>model artifact loading enforces an explicit allow-list of serialization formats that do not permit arbitrary code execution during deserialization.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="MANUAL"
+            data-chapter="C4"
+            data-level="2"
+            data-search="4.2.1 c4 ai accelerator (gpu) firmware is version-pinned, signed, and attested at boot. manual process/architectural review required">
+          <td><strong>4.2.1</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C4</strong></td>
+          <td>AI accelerator (GPU) firmware is version-pinned, signed, and attested at boot.</td>
+          <td><span class="badge manual">MANUAL</span></td>
+          <td><small style="color:var(--text-dim)">Manual process/architectural review required</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C4"
+            data-level="1"
+            data-search="4.3.1 c4 edge ai devices authenticate to central infrastructure using strong authentication mechanisms. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>4.3.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C4</strong></td>
+          <td>edge AI devices authenticate to central infrastructure using strong authentication mechanisms.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C4"
+            data-level="2"
+            data-search="4.3.2 c4 models deployed to edge or mobile devices are cryptographically signed during packaging, and that the on-device runtime validates these signatures or checksums before loading or inference. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>4.3.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C4</strong></td>
+          <td>models deployed to edge or mobile devices are cryptographically signed during packaging, and that the on-device runtime validates these signatures or checksums before loading or inference.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C5"
+            data-level="2"
+            data-search="5.2.1 c5 every ai resource (datasets, endpoints, vector collections, embedding indices, compute instances) enforces access controls with explicit allow-lists and default-deny policies. no verified automated control or indicator detected">
+          <td><strong>5.2.1</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C5</strong></td>
+          <td>every AI resource (datasets, endpoints, vector collections, embedding indices, compute instances) enforces access controls with explicit allow-lists and default-deny policies.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C5"
+            data-level="2"
+            data-search="5.2.2 c5 retrieval pipelines (e.g., rag queries, embedding lookups) enforce the end-user&#x27;s authorization context at each retrieval and assembly stage, rather than relying solely on the service account&#x27;s permissions. 38 indicator(s) of defense control verified">
+          <td><strong>5.2.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C5</strong></td>
+          <td>retrieval pipelines (e.g., RAG queries, embedding lookups) enforce the end-user&#x27;s authorization context at each retrieval and assembly stage, rather than relying solely on the service account&#x27;s permissions.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">38 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C5"
+            data-level="2"
+            data-search="5.2.3 c5 sensitive data is retrieved via retrieval pipelines (e.g., rag queries, embedding lookups) to prevent permanent storage in models. no verified automated control or indicator detected">
+          <td><strong>5.2.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C5</strong></td>
+          <td>sensitive data is retrieved via retrieval pipelines (e.g., RAG queries, embedding lookups) to prevent permanent storage in models.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C5"
+            data-level="2"
+            data-search="5.2.4 c5 post-inference filtering mechanisms prevent responses from including data that the requester is not authorized to receive. 17 indicator(s) of defense control verified">
+          <td><strong>5.2.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C5</strong></td>
+          <td>post-inference filtering mechanisms prevent responses from including data that the requester is not authorized to receive.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">17 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C5"
+            data-level="2"
+            data-search="5.2.5 c5 the policy decision point for agent authorization is isolated from the agent&#x27;s execution environment. 1 indicator(s) of defense control verified">
+          <td><strong>5.2.5</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C5</strong></td>
+          <td>the policy decision point for agent authorization is isolated from the agent&#x27;s execution environment.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">1 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C5"
+            data-level="2"
+            data-search="5.3.1 c5 shared model serving infrastructure prevents one tenant&#x27;s fine-tuning, inference, or embedding operations from influencing or observing another tenant&#x27;s operations. 6 indicator(s) of defense control verified">
+          <td><strong>5.3.1</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C5</strong></td>
+          <td>shared model serving infrastructure prevents one tenant&#x27;s fine-tuning, inference, or embedding operations from influencing or observing another tenant&#x27;s operations.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">6 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C6"
+            data-level="1"
+            data-search="6.1.1 c6 models are scanned for malicious code before import. no verified automated control or indicator detected">
+          <td><strong>6.1.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C6</strong></td>
+          <td>models are scanned for malicious code before import.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="FAIL"
+            data-chapter="C6"
+            data-level="1"
+            data-search="6.1.2 c6 model weights, datasets, and fine-tuning adapters are downloaded only from approved sources. 2 security weakness(es) identified">
+          <td><strong>6.1.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C6</strong></td>
+          <td>model weights, datasets, and fine-tuning adapters are downloaded only from approved sources.</td>
+          <td><span class="badge fail">FAIL</span></td>
+          <td><small style="color:var(--text-dim)">2 security weakness(es) identified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="FAIL"
+            data-chapter="C6"
+            data-level="2"
+            data-search="6.1.3 c6 every third-party model artifact can be integrity-verified. 2 security weakness(es) identified">
+          <td><strong>6.1.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C6</strong></td>
+          <td>every third-party model artifact can be integrity-verified.</td>
+          <td><span class="badge fail">FAIL</span></td>
+          <td><small style="color:var(--text-dim)">2 security weakness(es) identified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C6"
+            data-level="2"
+            data-search="6.1.4 c6 models pass a behavioral acceptance test suite before being promoted to any non-development environment. no verified automated control or indicator detected">
+          <td><strong>6.1.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C6</strong></td>
+          <td>models pass a behavioral acceptance test suite before being promoted to any non-development environment.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="MANUAL"
+            data-chapter="C6"
+            data-level="1"
+            data-search="6.2.1 c6 every model artifact publishes a version-controlled, machine-readable ai bom listing datasets, weights, licenses, and data-origin statements. manual process/architectural review required">
+          <td><strong>6.2.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C6</strong></td>
+          <td>every model artifact publishes a version-controlled, machine-readable AI BOM listing datasets, weights, licenses, and data-origin statements.</td>
+          <td><span class="badge manual">MANUAL</span></td>
+          <td><small style="color:var(--text-dim)">Manual process/architectural review required</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C6"
+            data-level="2"
+            data-search="6.2.2 c6 ai boms are cryptographically signed before deployment. no verified automated control or indicator detected">
+          <td><strong>6.2.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C6</strong></td>
+          <td>AI BOMs are cryptographically signed before deployment.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C6"
+            data-level="2"
+            data-search="6.2.3 c6 ai bom completeness checks fail the build if any component metadata is missing. no verified automated control or indicator detected">
+          <td><strong>6.2.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C6</strong></td>
+          <td>AI BOM completeness checks fail the build if any component metadata is missing.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C7"
+            data-level="1"
+            data-search="7.1.1 c7 the application validates all model outputs against a defined schema and rejects any output that does not match. 503 indicator(s) of defense control verified">
+          <td><strong>7.1.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C7</strong></td>
+          <td>the application validates all model outputs against a defined schema and rejects any output that does not match.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">503 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C7"
+            data-level="1"
+            data-search="7.1.2 c7 model-generated output is bounded by length limits and termination controls. no verified automated control or indicator detected">
+          <td><strong>7.1.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C7</strong></td>
+          <td>model-generated output is bounded by length limits and termination controls.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C7"
+            data-level="2"
+            data-search="7.1.3 c7 when an application uses an ai response to decide whether to perform an action, it does not perform that action if the ai refuses the request, reports a failure, or returns a response the application cannot correctly read or understand. 206 indicator(s) of defense control verified">
+          <td><strong>7.1.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C7</strong></td>
+          <td>when an application uses an AI response to decide whether to perform an action, it does not perform that action if the AI refuses the request, reports a failure, or returns a response the application cannot correctly read or understand.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">206 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C7"
+            data-level="2"
+            data-search="7.2.1 c7 the system assesses the reliability of generated answers using a confidence estimation method. 18 indicator(s) of defense control verified">
+          <td><strong>7.2.1</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C7</strong></td>
+          <td>the system assesses the reliability of generated answers using a confidence estimation method.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">18 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C7"
+            data-level="2"
+            data-search="7.2.2 c7 the application automatically blocks answers or switches to a fallback message if the confidence score drops below a defined threshold. 3 indicator(s) of defense control verified">
+          <td><strong>7.2.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C7</strong></td>
+          <td>the application automatically blocks answers or switches to a fallback message if the confidence score drops below a defined threshold.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">3 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C7"
+            data-level="1"
+            data-search="7.3.1 c7 automated classifiers scan every response and block content that matches defined harmful content categories. 16 indicator(s) of defense control verified">
+          <td><strong>7.3.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C7</strong></td>
+          <td>automated classifiers scan every response and block content that matches defined harmful content categories.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">16 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C7"
+            data-level="2"
+            data-search="7.3.2 c7 output filters detect and block responses that disclose system prompt content or backend data. 3 indicator(s) of defense control verified">
+          <td><strong>7.3.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C7</strong></td>
+          <td>output filters detect and block responses that disclose system prompt content or backend data.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">3 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="FAIL"
+            data-chapter="C7"
+            data-level="2"
+            data-search="7.3.3 c7 model-generated output is prevented from triggering outbound requests. 3 security weakness(es) identified">
+          <td><strong>7.3.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C7</strong></td>
+          <td>model-generated output is prevented from triggering outbound requests.</td>
+          <td><span class="badge fail">FAIL</span></td>
+          <td><small style="color:var(--text-dim)">3 security weakness(es) identified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C7"
+            data-level="1"
+            data-search="7.4.1 c7 responses generated using retrieval-augmented generation (rag) include attribution to the source documents. 122 indicator(s) of defense control verified">
+          <td><strong>7.4.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C7</strong></td>
+          <td>responses generated using retrieval-augmented generation (RAG) include attribution to the source documents.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">122 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C7"
+            data-level="1"
+            data-search="7.4.2 c7 rag attributions are derived from retrieval metadata and are not generated by the model, so provenance cannot be fabricated. 6 indicator(s) of defense control verified">
+          <td><strong>7.4.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C7</strong></td>
+          <td>RAG attributions are derived from retrieval metadata and are not generated by the model, so provenance cannot be fabricated.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">6 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C7"
+            data-level="2"
+            data-search="7.4.3 c7 claims in a rag response can be traced to the retrieved chunk. 6 indicator(s) of defense control verified">
+          <td><strong>7.4.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C7</strong></td>
+          <td>claims in a RAG response can be traced to the retrieved chunk.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">6 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C8"
+            data-level="1"
+            data-search="8.1.1 c8 vector identifiers and namespaces enforce uniqueness per tenant and prevent cross-tenant collisions. 6 indicator(s) of defense control verified">
+          <td><strong>8.1.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C8</strong></td>
+          <td>vector identifiers and namespaces enforce uniqueness per tenant and prevent cross-tenant collisions.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">6 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C8"
+            data-level="2"
+            data-search="8.1.2 c8 document metadata tags are immutable after the initial write. no verified automated control or indicator detected">
+          <td><strong>8.1.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C8</strong></td>
+          <td>document metadata tags are immutable after the initial write.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C8"
+            data-level="2"
+            data-search="8.1.3 c8 retrieval operations enforce scope constraints. 38 indicator(s) of defense control verified">
+          <td><strong>8.1.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C8</strong></td>
+          <td>retrieval operations enforce scope constraints.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">38 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C8"
+            data-level="1"
+            data-search="8.2.1 c8 sensitive fields are detected before embedding and are masked, tokenized, or dropped. 17 indicator(s) of defense control verified">
+          <td><strong>8.2.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C8</strong></td>
+          <td>sensitive fields are detected before embedding and are masked, tokenized, or dropped.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">17 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C8"
+            data-level="2"
+            data-search="8.2.2 c8 vectors that fall outside normal clustering patterns are flagged and quarantined before entering production indices. no verified automated control or indicator detected">
+          <td><strong>8.2.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C8</strong></td>
+          <td>vectors that fall outside normal clustering patterns are flagged and quarantined before entering production indices.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C8"
+            data-level="2"
+            data-search="8.2.3 c8 no component reachable from agent execution can write agent outputs or tool outputs to trusted agent memory without explicit source validation. no verified automated control or indicator detected">
+          <td><strong>8.2.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C8</strong></td>
+          <td>no component reachable from agent execution can write agent outputs or tool outputs to trusted agent memory without explicit source validation.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C8"
+            data-level="2"
+            data-search="8.3.1 c8 expired vectors are excluded from retrieval results. 80 indicator(s) of defense control verified">
+          <td><strong>8.3.1</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C8</strong></td>
+          <td>expired vectors are excluded from retrieval results.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">80 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C8"
+            data-level="2"
+            data-search="8.3.2 c8 memory can be reset. 4 indicator(s) of defense control verified">
+          <td><strong>8.3.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C8</strong></td>
+          <td>memory can be reset.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">4 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="1"
+            data-search="9.1.1 c9 per-tool quotas and timeouts (e.g., cpu, memory, disk, egress, and execution time) are enforced by the runtime. 235 indicator(s) of defense control verified">
+          <td><strong>9.1.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C9</strong></td>
+          <td>per-tool quotas and timeouts (e.g., CPU, memory, disk, egress, and execution time) are enforced by the runtime.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">235 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="1"
+            data-search="9.1.2 c9 per-execution budgets (e.g., max recursion depth, token use, and monetary spend) are enforced by the runtime. 130 indicator(s) of defense control verified">
+          <td><strong>9.1.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C9</strong></td>
+          <td>per-execution budgets (e.g., max recursion depth, token use, and monetary spend) are enforced by the runtime.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">130 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.1.3 c9 a swarm-level kill-switch exists that can halt all active agent instances. no verified automated control or indicator detected">
+          <td><strong>9.1.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>a swarm-level kill-switch exists that can halt all active agent instances.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="1"
+            data-search="9.2.1 c9 the agent runtime blocks execution of privileged or irreversible actions until explicit human approval is received and verified. 68 indicator(s) of defense control verified">
+          <td><strong>9.2.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C9</strong></td>
+          <td>the agent runtime blocks execution of privileged or irreversible actions until explicit human approval is received and verified.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">68 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.2.2 c9 approval requests display canonicalized and complete action parameters, such as diffs, commands, recipients, amounts, resources, and scopes, without truncation or unsafe transformation. no verified automated control or indicator detected">
+          <td><strong>9.2.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>approval requests display canonicalized and complete action parameters, such as diffs, commands, recipients, amounts, resources, and scopes, without truncation or unsafe transformation.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.2.3 c9 each high-impact action has a trusted reversibility classification, such as read-only, reversible, externally reversible, or irreversible. 4 indicator(s) of defense control verified">
+          <td><strong>9.2.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>each high-impact action has a trusted reversibility classification, such as read-only, reversible, externally reversible, or irreversible.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">4 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.2.4 c9 the agent runtime enforces reversibility classifications by blocking, requiring approval, or restricting actions based on their impact and ability to be reversed. 4 indicator(s) of defense control verified">
+          <td><strong>9.2.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>the agent runtime enforces reversibility classifications by blocking, requiring approval, or restricting actions based on their impact and ability to be reversed.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">4 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="MANUAL"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.2.5 c9 any self-modification capability (e.g., prompt rewriting, tool-list changes, parameter updates) is restricted by boundaries that are enforced by the runtime and cannot be changed or bypassed by the agent. manual process/architectural review required">
+          <td><strong>9.2.5</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>any self-modification capability (e.g., prompt rewriting, tool-list changes, parameter updates) is restricted by boundaries that are enforced by the runtime and cannot be changed or bypassed by the agent.</td>
+          <td><span class="badge manual">MANUAL</span></td>
+          <td><small style="color:var(--text-dim)">Manual process/architectural review required</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.2.6 c9 agentic systems include an ai-augmented review of planned high-risk actions before execution that adds to, and does not replace, the deterministic policy gate. 5 indicator(s) of defense control verified">
+          <td><strong>9.2.6</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>agentic systems include an AI-augmented review of planned high-risk actions before execution that adds to, and does not replace, the deterministic policy gate.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">5 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.2.7 c9 the ai-augmented review mechanism is protected against manipulation by adversarial inputs, and cannot be overridden or bypassed through prompt injection. 5 indicator(s) of defense control verified">
+          <td><strong>9.2.7</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>the AI-augmented review mechanism is protected against manipulation by adversarial inputs, and cannot be overridden or bypassed through prompt injection.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">5 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="1"
+            data-search="9.3.1 c9 each tool/plugin executes in a least-privilege sandbox or is otherwise isolated from model operations. 5 indicator(s) of defense control verified">
+          <td><strong>9.3.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C9</strong></td>
+          <td>each tool/plugin executes in a least-privilege sandbox or is otherwise isolated from model operations.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">5 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="1"
+            data-search="9.3.2 c9 tool outputs are validated against schemas. 1863 indicator(s) of defense control verified">
+          <td><strong>9.3.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C9</strong></td>
+          <td>tool outputs are validated against schemas.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">1863 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.3.3 c9 tool manifests declare required privileges, resource limits, and output validation requirements. 391 indicator(s) of defense control verified">
+          <td><strong>9.3.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>tool manifests declare required privileges, resource limits, and output validation requirements.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">391 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.3.4 c9 the runtime enforces the privileges, resource limits, and output-validation requirements declared in tool manifests. 156 indicator(s) of defense control verified">
+          <td><strong>9.3.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>the runtime enforces the privileges, resource limits, and output-validation requirements declared in tool manifests.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">156 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.3.5 c9 components processing untrusted data are isolated from tool-calling capabilities, ensuring that compromised data processing cannot trigger unauthorized tool invocations. no verified automated control or indicator detected">
+          <td><strong>9.3.5</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>components processing untrusted data are isolated from tool-calling capabilities, ensuring that compromised data processing cannot trigger unauthorized tool invocations.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.3.6 c9 there is architectural separation between processing of untrusted tool outputs and agent operations. no verified automated control or indicator detected">
+          <td><strong>9.3.6</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>there is architectural separation between processing of untrusted tool outputs and agent operations.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="FAIL"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.3.7 c9 external resources named in model output are verified against an approved allow-list or registry before the agent installs or invokes them. 1 security weakness(es) identified">
+          <td><strong>9.3.7</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>external resources named in model output are verified against an approved allow-list or registry before the agent installs or invokes them.</td>
+          <td><span class="badge fail">FAIL</span></td>
+          <td><small style="color:var(--text-dim)">1 security weakness(es) identified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.3.9 c9 services reachable from agent or tool sandboxes enforce the defined run, task, or tenant isolation policy on agent-writable state, including object names. no verified automated control or indicator detected">
+          <td><strong>9.3.9</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>services reachable from agent or tool sandboxes enforce the defined run, task, or tenant isolation policy on agent-writable state, including object names.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.4.1 c9 each agent instance has a unique cryptographic identity and authenticates as a first-class principal to downstream systems. 8 indicator(s) of defense control verified">
+          <td><strong>9.4.1</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>each agent instance has a unique cryptographic identity and authenticates as a first-class principal to downstream systems.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">8 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.4.2 c9 agent-initiated actions are cryptographically bound to each step of the execution chain for non-repudiation. no verified automated control or indicator detected">
+          <td><strong>9.4.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>agent-initiated actions are cryptographically bound to each step of the execution chain for non-repudiation.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.5.1 c9 agent actions are authorized against fine-grained policies enforced by the runtime that restrict which tools an agent may invoke, and which parameter values it may supply. 94 indicator(s) of defense control verified">
+          <td><strong>9.5.1</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>agent actions are authorized against fine-grained policies enforced by the runtime that restrict which tools an agent may invoke, and which parameter values it may supply.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">94 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.5.2 c9 when an agent acts on a user&#x27;s behalf, the runtime propagates an integrity-protected, scope-limited token that carries the user&#x27;s authorization context and is enforced at every downstream call. no verified automated control or indicator detected">
+          <td><strong>9.5.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>when an agent acts on a user&#x27;s behalf, the runtime propagates an integrity-protected, scope-limited token that carries the user&#x27;s authorization context and is enforced at every downstream call.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.5.3 c9 all access control decisions are enforced by application logic or a policy engine, never by the ai model itself. 1 indicator(s) of defense control verified">
+          <td><strong>9.5.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>all access control decisions are enforced by application logic or a policy engine, never by the AI model itself.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">1 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.5.4 c9 secrets and credentials required by an agent at runtime are not exposed within the model&#x27;s observable context, including the context window, system prompts, or tool call parameters. no verified automated control or indicator detected">
+          <td><strong>9.5.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>secrets and credentials required by an agent at runtime are not exposed within the model&#x27;s observable context, including the context window, system prompts, or tool call parameters.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.5.5 c9 inter-agent task delegation is restricted by an explicit authorization policy. 1 indicator(s) of defense control verified">
+          <td><strong>9.5.5</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>inter-agent task delegation is restricted by an explicit authorization policy.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">1 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.5.7 c9 authority derived through delegation never exceeds the delegating agent&#x27;s current authority. 1 indicator(s) of defense control verified">
+          <td><strong>9.5.7</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>authority derived through delegation never exceeds the delegating agent&#x27;s current authority.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">1 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C9"
+            data-level="1"
+            data-search="9.6.1 c9 a manual kill-switch mechanism exists to immediately halt ai model inference and outputs. no verified automated control or indicator detected">
+          <td><strong>9.6.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C9</strong></td>
+          <td>a manual kill-switch mechanism exists to immediately halt AI model inference and outputs.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C9"
+            data-level="2"
+            data-search="9.6.2 c9 when a human-approval gate is not satisfied within the defined approval time, the system blocks the pending action. 13 indicator(s) of defense control verified">
+          <td><strong>9.6.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C9</strong></td>
+          <td>when a human-approval gate is not satisfied within the defined approval time, the system blocks the pending action.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">13 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.1.1 c10 mcp components are obtained only from trusted sources and cryptographically verified. 1 indicator(s) of defense control verified">
+          <td><strong>10.1.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP components are obtained only from trusted sources and cryptographically verified.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">1 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.1.2 c10 only allow-listed mcp servers are permitted. no verified automated control or indicator detected">
+          <td><strong>10.1.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>only allow-listed MCP servers are permitted.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.1.3 c10 locally launched mcp servers run in a least-privilege sandbox with restricted file system, network, and system access. 5 indicator(s) of defense control verified">
+          <td><strong>10.1.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>locally launched MCP servers run in a least-privilege sandbox with restricted file system, network, and system access.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">5 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.2.1 c10 mcp servers validate access tokens for each request and do not rely on transport security alone. 6 indicator(s) of defense control verified">
+          <td><strong>10.2.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers validate access tokens for each request and do not rely on transport security alone.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">6 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.2.2 c10 mcp servers validate the presented access token&#x27;s issuer, audience, expiration, and scope claims in accordance with oauth 2.1. 10 indicator(s) of defense control verified">
+          <td><strong>10.2.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers validate the presented access token&#x27;s issuer, audience, expiration, and scope claims in accordance with OAuth 2.1.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">10 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.2.3 c10 mcp servers acting as oauth 2.1 resource servers do not store or persist access tokens or user credentials. no verified automated control or indicator detected">
+          <td><strong>10.2.3</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers acting as OAuth 2.1 resource servers do not store or persist access tokens or user credentials.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.2.4 c10 mcp tools/list returns only tools permitted by the requester&#x27;s authorized scopes, and that list responses vary only by authorization context, never by connection. no verified automated control or indicator detected">
+          <td><strong>10.2.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP tools/list returns only tools permitted by the requester&#x27;s authorized scopes, and that list responses vary only by authorization context, never by connection.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.2.5 c10 mcp servers enforce access control on every tool invocation, validating that the user&#x27;s access token authorizes both the requested tool and the specific argument values supplied. 10 indicator(s) of defense control verified">
+          <td><strong>10.2.5</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers enforce access control on every tool invocation, validating that the user&#x27;s access token authorizes both the requested tool and the specific argument values supplied.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">10 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.2.7 c10 mcp servers only accept tokens explicitly issued for them, and do not pass tokens issued for other services through to downstream apis. 10 indicator(s) of defense control verified">
+          <td><strong>10.2.7</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers only accept tokens explicitly issued for them, and do not pass tokens issued for other services through to downstream APIs.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">10 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.2.8 c10 mcp servers protect the integrity of `requeststate` that influences authorization, resource access, or business logic, and reject state that fails verification. 4 indicator(s) of defense control verified">
+          <td><strong>10.2.8</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers protect the integrity of `requestState` that influences authorization, resource access, or business logic, and reject state that fails verification.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">4 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.2.9 c10 mcp clients bind persisted oauth client credentials to the issuing authorization server and do not present them to a different authorization server. no verified automated control or indicator detected">
+          <td><strong>10.2.9</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP clients bind persisted OAuth client credentials to the issuing authorization server and do not present them to a different authorization server.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.2.10 c10 mcp servers enforce single use server-side for `requeststate` that must be consumed at most once. 4 indicator(s) of defense control verified">
+          <td><strong>10.2.10</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers enforce single use server-side for `requestState` that must be consumed at most once.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">4 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.3.1 c10 authenticated, encrypted streamable http is used for mcp transport for remote services. 544 indicator(s) of defense control verified">
+          <td><strong>10.3.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>authenticated, encrypted streamable HTTP is used for MCP transport for remote services.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">544 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.3.2 c10 stdio transport is permitted only in controlled local environments. no verified automated control or indicator detected">
+          <td><strong>10.3.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>stdio transport is permitted only in controlled local environments.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.3.3 c10 mcp servers validate both the origin header and the host header independently on all http-based transports to prevent dns rebinding attacks. 21 indicator(s) of defense control verified">
+          <td><strong>10.3.3</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers validate both the Origin header and the Host header independently on all HTTP-based transports to prevent DNS rebinding attacks.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">21 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.3.4 c10 mcp clients enforce a minimum acceptable protocol version and do not retry with, or fall back to, a protocol version or legacy handshake below that minimum. no verified automated control or indicator detected">
+          <td><strong>10.3.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP clients enforce a minimum acceptable protocol version and do not retry with, or fall back to, a protocol version or legacy handshake below that minimum.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.3.6 c10 mcp intermediaries enforcing policy on mirrored request headers confirm that the protocol version indicates a revision requiring header and body validation before trusting those headers. no verified automated control or indicator detected">
+          <td><strong>10.3.6</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP intermediaries enforcing policy on mirrored request headers confirm that the protocol version indicates a revision requiring header and body validation before trusting those headers.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.4.1 c10 mcp tools/list and tools/call responses are validated against their declared schemas before being injected into the model context. 1863 indicator(s) of defense control verified">
+          <td><strong>10.4.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP tools/list and tools/call responses are validated against their declared schemas before being injected into the model context.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">1863 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.4.2 c10 mcp tools/list and tools/call responses are screened for indirect prompt injection before being injected into the model context. 4 indicator(s) of defense control verified">
+          <td><strong>10.4.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP tools/list and tools/call responses are screened for indirect prompt injection before being injected into the model context.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">4 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.4.3 c10 mcp servers reject unrecognized or oversized parameters in function calls. 14 indicator(s) of defense control verified">
+          <td><strong>10.4.3</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers reject unrecognized or oversized parameters in function calls.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">14 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.4 c10 all mcp servers enforce strict schema validation. 1877 indicator(s) of defense control verified">
+          <td><strong>10.4.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>all MCP servers enforce strict schema validation.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">1877 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.5 c10 all mcp transports enforce maximum payload size limits. 5 indicator(s) of defense control verified">
+          <td><strong>10.4.5</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>all MCP transports enforce maximum payload size limits.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">5 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.6 c10 mcp servers sign tool responses with a unique nonce and timestamp so mcp clients can detect replay attempts. 4 indicator(s) of defense control verified">
+          <td><strong>10.4.6</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers sign tool responses with a unique nonce and timestamp so MCP clients can detect replay attempts.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">4 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.7 c10 mcp clients present users with explicit consent dialogue and cancellation options upon installation of a local mcp server. 2 indicator(s) of defense control verified">
+          <td><strong>10.4.7</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP clients present users with explicit consent dialogue and cancellation options upon installation of a local MCP server.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">2 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.9 c10 mcp proxy servers using a shared upstream oauth client identity do not allow a requesting mcp client to inherit authorization established for a different mcp client. 2 indicator(s) of defense control verified">
+          <td><strong>10.4.9</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP proxy servers using a shared upstream OAuth client identity do not allow a requesting MCP client to inherit authorization established for a different MCP client.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">2 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.10 c10 mcp clients bind each approved mcp server&#x27;s granted consent and authorization to the connection endpoint approved for that server, and require user re-approval before any further interaction once that endpoint changes. 2 indicator(s) of defense control verified">
+          <td><strong>10.4.10</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP clients bind each approved MCP server&#x27;s granted consent and authorization to the connection endpoint approved for that server, and require user re-approval before any further interaction once that endpoint changes.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">2 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.4.11 c10 mcp clients reject tool definitions containing invalid mirrored-header annotations, excluding the affected tool rather than the entire tool list. no verified automated control or indicator detected">
+          <td><strong>10.4.11</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP clients reject tool definitions containing invalid mirrored-header annotations, excluding the affected tool rather than the entire tool list.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.12 c10 mcp servers reject requests where mirrored request headers do not match the corresponding request body values, after decoding any encoded header values. no verified automated control or indicator detected">
+          <td><strong>10.4.12</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers reject requests where mirrored request headers do not match the corresponding request body values, after decoding any encoded header values.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.13 c10 mcp implementations apply resource bounds to schema validation, such as a maximum schema depth, a cap on the total number of nested schema elements, or a per-validation time budget. 9 indicator(s) of defense control verified">
+          <td><strong>10.4.13</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP implementations apply resource bounds to schema validation, such as a maximum schema depth, a cap on the total number of nested schema elements, or a per-validation time budget.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">9 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.4.14 c10 mcp implementations do not automatically dereference json schema `$ref` values that resolve to network uris, and that any opt-in external resolution is disabled by default and rejects loopback, link-local, and private network addresses. no verified automated control or indicator detected">
+          <td><strong>10.4.14</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP implementations do not automatically dereference JSON Schema `$ref` values that resolve to network URIs, and that any opt-in external resolution is disabled by default and rejects loopback, link-local, and private network addresses.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.15 c10 mcp implementations reject schemas that fail to validate due to an unresolved external `$ref` rather than treating them as permissive. no verified automated control or indicator detected">
+          <td><strong>10.4.15</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP implementations reject schemas that fail to validate due to an unresolved external `$ref` rather than treating them as permissive.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.16 c10 mcp clients and intermediaries reuse cached responses marked with a private cache scope only within the authorization context that produced them, and do not cache results of multi round-trip requests. no verified automated control or indicator detected">
+          <td><strong>10.4.16</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP clients and intermediaries reuse cached responses marked with a private cache scope only within the authorization context that produced them, and do not cache results of multi round-trip requests.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.17 c10 mcp servers mark cacheable results containing user-specific or authorization-filtered data with a private cache scope. no verified automated control or indicator detected">
+          <td><strong>10.4.17</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers mark cacheable results containing user-specific or authorization-filtered data with a private cache scope.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.18 c10 mcp servers do not use form-mode elicitation to request secrets or payment credentials, and that in url-mode elicitation the user completing the flow is the same user who initiated it. no verified automated control or indicator detected">
+          <td><strong>10.4.18</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers do not use form-mode elicitation to request secrets or payment credentials, and that in URL-mode elicitation the user completing the flow is the same user who initiated it.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="1"
+            data-search="10.4.19 c10 mcp servers exclude end-user credentials and personal data from url-mode elicitation urls, and do not issue urls that are pre-authenticated to a protected resource. no verified automated control or indicator detected">
+          <td><strong>10.4.19</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP servers exclude end-user credentials and personal data from URL-mode elicitation URLs, and do not issue URLs that are pre-authenticated to a protected resource.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.20 c10 mcp clients require explicit user consent and display the full url before opening any url-mode elicitation target, and do not pre-fetch the url or its metadata. no verified automated control or indicator detected">
+          <td><strong>10.4.20</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP clients require explicit user consent and display the full URL before opening any URL-mode elicitation target, and do not pre-fetch the URL or its metadata.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C10"
+            data-level="2"
+            data-search="10.4.21 c10 mcp clients open url-mode elicitation targets so that neither the client nor the model can observe the page contents or the user&#x27;s input. no verified automated control or indicator detected">
+          <td><strong>10.4.21</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C10</strong></td>
+          <td>MCP clients open URL-mode elicitation targets so that neither the client nor the model can observe the page contents or the user&#x27;s input.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="MANUAL"
+            data-chapter="C11"
+            data-level="1"
+            data-search="11.1.1 c11 the model has undergone alignment and safety training or fine-tuning to prevent the model from generating disallowed content categories. manual process/architectural review required">
+          <td><strong>11.1.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C11</strong></td>
+          <td>the model has undergone alignment and safety training or fine-tuning to prevent the model from generating disallowed content categories.</td>
+          <td><span class="badge manual">MANUAL</span></td>
+          <td><small style="color:var(--text-dim)">Manual process/architectural review required</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C11"
+            data-level="1"
+            data-search="11.1.2 c11 a version-controlled alignment test suite is run on every model update or release. no verified automated control or indicator detected">
+          <td><strong>11.1.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C11</strong></td>
+          <td>a version-controlled alignment test suite is run on every model update or release.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C11"
+            data-level="1"
+            data-search="11.1.3 c11 models are evaluated against known adversarial attack techniques relevant to their modality. no verified automated control or indicator detected">
+          <td><strong>11.1.3</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C11</strong></td>
+          <td>models are evaluated against known adversarial attack techniques relevant to their modality.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C11"
+            data-level="2"
+            data-search="11.1.4 c11 models are hardened against adversarial inputs. 16 indicator(s) of defense control verified">
+          <td><strong>11.1.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C11</strong></td>
+          <td>models are hardened against adversarial inputs.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">16 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C11"
+            data-level="2"
+            data-search="11.1.6 c11 adversarial evaluation results are reported alongside results for the same tasks, scored the same way, with no attack applied. no verified automated control or indicator detected">
+          <td><strong>11.1.6</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C11</strong></td>
+          <td>adversarial evaluation results are reported alongside results for the same tasks, scored the same way, with no attack applied.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="MANUAL"
+            data-chapter="C11"
+            data-level="1"
+            data-search="11.2.1 c11 model-inferred sensitive attributes are not directly returned in outputs. manual process/architectural review required">
+          <td><strong>11.2.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C11</strong></td>
+          <td>model-inferred sensitive attributes are not directly returned in outputs.</td>
+          <td><span class="badge manual">MANUAL</span></td>
+          <td><small style="color:var(--text-dim)">Manual process/architectural review required</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C11"
+            data-level="1"
+            data-search="11.2.2 c11 inference endpoints enforce per-principal and global rate limits sized to the extraction threat model, and not solely as a generic api throttle. 33 indicator(s) of defense control verified">
+          <td><strong>11.2.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C11</strong></td>
+          <td>inference endpoints enforce per-principal and global rate limits sized to the extraction threat model, and not solely as a generic API throttle.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">33 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C11"
+            data-level="2"
+            data-search="11.2.3 c11 model outputs are calibrated to reduce overconfident predictions. no verified automated control or indicator detected">
+          <td><strong>11.2.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C11</strong></td>
+          <td>model outputs are calibrated to reduce overconfident predictions.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C11"
+            data-level="2"
+            data-search="11.2.4 c11 training on sensitive datasets employs differentially-private optimization. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>11.2.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C11</strong></td>
+          <td>training on sensitive datasets employs differentially-private optimization.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C11"
+            data-level="1"
+            data-search="11.3.1 c11 query-pattern analysis feeds an extraction-attempt detector. 2 indicator(s) of defense control verified">
+          <td><strong>11.3.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C11</strong></td>
+          <td>query-pattern analysis feeds an extraction-attempt detector.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">2 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C11"
+            data-level="2"
+            data-search="11.3.2 c11 raw model outputs are not directly exposed beyond the application backend, and that externally visible responses are calibrated to the extraction risk level. no verified automated control or indicator detected">
+          <td><strong>11.3.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C11</strong></td>
+          <td>raw model outputs are not directly exposed beyond the application backend, and that externally visible responses are calibrated to the extraction risk level.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C11"
+            data-level="2"
+            data-search="11.3.5 c11 inference endpoints constrain sampling and decoding parameters supplied by untrusted callers (e.g., temperature, top-k, top-p, logit bias, candidate/n count) to server-side approved ranges and defaults, rejecting out-of-policy values. no verified automated control or indicator detected">
+          <td><strong>11.3.5</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C11</strong></td>
+          <td>inference endpoints constrain sampling and decoding parameters supplied by untrusted callers (e.g., temperature, top-k, top-p, logit bias, candidate/n count) to server-side approved ranges and defaults, rejecting out-of-policy values.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C11"
+            data-level="2"
+            data-search="11.4.1 c11 inputs from external or untrusted sources pass through anomaly detection before model inference. no verified automated control or indicator detected">
+          <td><strong>11.4.1</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C11</strong></td>
+          <td>inputs from external or untrusted sources pass through anomaly detection before model inference.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C11"
+            data-level="2"
+            data-search="11.4.2 c11 inputs flagged as anomalous trigger gating actions. no verified automated control or indicator detected">
+          <td><strong>11.4.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C11</strong></td>
+          <td>inputs flagged as anomalous trigger gating actions.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C12"
+            data-level="1"
+            data-search="12.1.1 c12 ai interactions are logged with session context and ai-specific telemetry. 200 indicator(s) of defense control verified">
+          <td><strong>12.1.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C12</strong></td>
+          <td>AI interactions are logged with session context and AI-specific telemetry.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">200 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.1.2 c12 safety filtering and policy decisions are logged with sufficient detail to support audit, debugging, and forensic analysis of content moderation systems. 2 indicator(s) of defense control verified">
+          <td><strong>12.1.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>safety filtering and policy decisions are logged with sufficient detail to support audit, debugging, and forensic analysis of content moderation systems.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">2 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.1.3 c12 log entries for ai inference events follow a structured, interoperable schema that includes at least the model identifier, token usage (input and output), provider name, and operation type. 27 indicator(s) of defense control verified">
+          <td><strong>12.1.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>log entries for AI inference events follow a structured, interoperable schema that includes at least the model identifier, token usage (input and output), provider name, and operation type.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">27 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.1.4 c12 rag pipeline retrieval events are logged, including the query, documents retrieved, and knowledge source. 4 indicator(s) of defense control verified">
+          <td><strong>12.1.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>RAG pipeline retrieval events are logged, including the query, documents retrieved, and knowledge source.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">4 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C12"
+            data-level="1"
+            data-search="12.2.1 c12 the system detects and alerts on known jailbreak patterns, prompt injection attempts, and adversarial inputs. 4 indicator(s) of defense control verified">
+          <td><strong>12.2.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C12</strong></td>
+          <td>the system detects and alerts on known jailbreak patterns, prompt injection attempts, and adversarial inputs.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">4 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.2.2 c12 behavioral anomaly detection identifies unusual conversation patterns, excessive retry attempts, or probing behaviors. 12 indicator(s) of defense control verified">
+          <td><strong>12.2.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>behavioral anomaly detection identifies unusual conversation patterns, excessive retry attempts, or probing behaviors.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">12 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.2.3 c12 custom rules detect ai-specific threat patterns for coordinated jailbreak attempts, prompt injection, and system prompt extraction attempts. no verified automated control or indicator detected">
+          <td><strong>12.2.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>custom rules detect AI-specific threat patterns for coordinated jailbreak attempts, prompt injection, and system prompt extraction attempts.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.2.4 c12 extraction-alert events include offending query metadata to support investigation. 2 indicator(s) of defense control verified">
+          <td><strong>12.2.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>extraction-alert events include offending query metadata to support investigation.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">2 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.2.5 c12 token usage is tracked at granular attribution levels including per user, per session, per feature endpoint, and per team or workspace. 168 indicator(s) of defense control verified">
+          <td><strong>12.2.5</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>token usage is tracked at granular attribution levels including per user, per session, per feature endpoint, and per team or workspace.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">168 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C12"
+            data-level="1"
+            data-search="12.3.1 c12 data drift detection monitors input distribution changes that may impact model performance, using statistically validated methods matched to the input data type (e.g., ks test or psi for tabular numeric features, embedding-distance metrics for text or image). 1 indicator(s) of defense control verified">
+          <td><strong>12.3.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C12</strong></td>
+          <td>data drift detection monitors input distribution changes that may impact model performance, using statistically validated methods matched to the input data type (e.g., KS test or PSI for tabular numeric features, embedding-distance metrics for text or image).</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">1 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.3.2 c12 hallucination detection monitors identify and flag model outputs that contain factually incorrect, inconsistent, or fabricated information. no verified automated control or indicator detected">
+          <td><strong>12.3.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>hallucination detection monitors identify and flag model outputs that contain factually incorrect, inconsistent, or fabricated information.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.3.3 c12 hallucination rates are tracked as continuous time-series metrics to enable trend analysis and detection of sustained model degradation. no verified automated control or indicator detected">
+          <td><strong>12.3.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>hallucination rates are tracked as continuous time-series metrics to enable trend analysis and detection of sustained model degradation.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="MANUAL"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.4.1 c12 autonomous action triggers include proactive behavior-pattern analysis, security evaluation, and threat-landscape assessment. manual process/architectural review required">
+          <td><strong>12.4.1</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>autonomous action triggers include proactive behavior-pattern analysis, security evaluation, and threat-landscape assessment.</td>
+          <td><span class="badge manual">MANUAL</span></td>
+          <td><small style="color:var(--text-dim)">Manual process/architectural review required</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.4.2 c12 audit logs capture security-critical proactive actions, including approver identity, timestamp, action parameters, and decision outcomes. 2 indicator(s) of defense control verified">
+          <td><strong>12.4.2</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>audit logs capture security-critical proactive actions, including approver identity, timestamp, action parameters, and decision outcomes.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">2 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.4.3 c12 kill-switch activations and override commands are logged. no verified automated control or indicator detected">
+          <td><strong>12.4.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>kill-switch activations and override commands are logged.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C12"
+            data-level="1"
+            data-search="12.5.1 c12 dataset lineage records each dataset and its components, including all transformations, augmentations, and merges. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>12.5.1</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C12</strong></td>
+          <td>dataset lineage records each dataset and its components, including all transformations, augmentations, and merges.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="N/A"
+            data-chapter="C12"
+            data-level="1"
+            data-search="12.5.2 c12 all labeling activities are recorded in logs. feature not detected in codebase (e.g. mcp/rag/agents/training)">
+          <td><strong>12.5.2</strong></td>
+          <td><span style="color:var(--text-dim)">L1</span></td>
+          <td><strong>C12</strong></td>
+          <td>all labeling activities are recorded in logs.</td>
+          <td><span class="badge na">N/A</span></td>
+          <td><small style="color:var(--text-dim)">Feature not detected in codebase (e.g. MCP/RAG/Agents/Training)</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="PASS"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.5.3 c12 all model changes generate immutable audit records. 31 indicator(s) of defense control verified">
+          <td><strong>12.5.3</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>all model changes generate immutable audit records.</td>
+          <td><span class="badge pass">PASS</span></td>
+          <td><small style="color:var(--text-dim)">31 indicator(s) of defense control verified</small></td>
+        </tr>
+        <tr class="req-row"
+            data-status="GAP"
+            data-chapter="C12"
+            data-level="2"
+            data-search="12.5.4 c12 every ingested document is tagged at write time with source, writer identity, and timestamp. no verified automated control or indicator detected">
+          <td><strong>12.5.4</strong></td>
+          <td><span style="color:var(--text-dim)">L2</span></td>
+          <td><strong>C12</strong></td>
+          <td>every ingested document is tagged at write time with source, writer identity, and timestamp.</td>
+          <td><span class="badge gap">GAP</span></td>
+          <td><small style="color:var(--text-dim)">No verified automated control or indicator detected</small></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // --- State variables ---
+    let activeKpiStatus = null;
+
+    // --- Interactive Finding details toggle ---
+    function toggleFindingDetails(idx) {
+      const row = document.getElementById('fdet-' + idx);
+      if (row) {
+        row.classList.toggle('show');
+      }
+    }
+
+    // --- KPI Card Click Handler ---
+    function toggleStatusFilter(status) {
+      if (activeKpiStatus === status) {
+        activeKpiStatus = null;
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+        document.getElementById('reqStatusFilter').value = '';
+      } else {
+        activeKpiStatus = status;
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+        const kpiCard = document.getElementById('kpi-' + status.toLowerCase().replace('/', ''));
+        if (kpiCard) kpiCard.classList.add('active');
+        document.getElementById('reqStatusFilter').value = status;
+      }
+      filterRequirements();
+
+      // Scroll smoothly to requirements section if filtered
+      const reqHeader = document.querySelector('#reqsTable');
+      if (reqHeader) {
+        reqHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    // --- Quick Pills for Findings ---
+    function setFindingSeverityQuick(mode) {
+      document.querySelectorAll('#f-pill-all, #f-pill-crit-high').forEach(b => b.classList.remove('active'));
+      if (mode === '') {
+        document.getElementById('f-pill-all').classList.add('active');
+        document.getElementById('findingSeverityFilter').value = '';
+      } else if (mode === 'HIGH_PLUS') {
+        document.getElementById('f-pill-crit-high').classList.add('active');
+        document.getElementById('findingSeverityFilter').value = 'HIGH';
+      }
+      filterFindings();
+    }
+
+    function setFindingChapterQuick(chap) {
+      const select = document.getElementById('findingChapterFilter');
+      if (select.value === chap) {
+        select.value = '';
+      } else {
+        select.value = chap;
+      }
+      filterFindings();
+    }
+
+    // --- Filter Findings Table ---
+    function filterFindings() {
+      const search = document.getElementById('findingSearch').value.toLowerCase().trim();
+      const sev = document.getElementById('findingSeverityFilter').value;
+      const chap = document.getElementById('findingChapterFilter').value;
+
+      const rows = document.querySelectorAll('#findingsTable tbody tr.finding-row');
+      let visibleCount = 0;
+
+      rows.forEach(r => {
+        const rowSev = r.getAttribute('data-severity');
+        const rowChaps = r.getAttribute('data-chapters').split(' ');
+        const searchBlob = r.getAttribute('data-search');
+        const idMatch = r.id.replace('frow-', '');
+        const detailRow = document.getElementById('fdet-' + idMatch);
+
+        let matchSev = true;
+        if (sev === 'HIGH') {
+          matchSev = (rowSev === 'HIGH' || rowSev === 'CRITICAL');
+        } else if (sev) {
+          matchSev = (rowSev === sev);
+        }
+
+        let matchChap = !chap || rowChaps.includes(chap);
+        let matchSearch = !search || searchBlob.includes(search);
+
+        if (matchSev && matchChap && matchSearch) {
+          r.style.display = '';
+          visibleCount++;
+        } else {
+          r.style.display = 'none';
+          if (detailRow) detailRow.classList.remove('show');
+        }
+      });
+
+      const total = rows.length;
+      document.getElementById('findingsCounter').textContent = `Showing ${visibleCount} of ${total}`;
+    }
+
+    // --- Filter Requirements Table ---
+    function filterRequirements() {
+      const search = document.getElementById('reqSearch').value.toLowerCase().trim();
+      const status = document.getElementById('reqStatusFilter').value;
+      const chapter = document.getElementById('reqChapterFilter').value;
+      const level = document.getElementById('reqLevelFilter').value;
+
+      const rows = document.querySelectorAll('#reqsTable tbody tr.req-row');
+      let visibleCount = 0;
+
+      rows.forEach(r => {
+        const rowStatus = r.getAttribute('data-status');
+        const rowChap = r.getAttribute('data-chapter');
+        const rowLevel = r.getAttribute('data-level');
+        const searchBlob = r.getAttribute('data-search');
+
+        const matchStatus = !status || rowStatus === status;
+        const matchChap = !chapter || rowChap === chapter;
+        const matchLevel = !level || rowLevel === level;
+        const matchSearch = !search || searchBlob.includes(search);
+
+        if (matchStatus && matchChap && matchLevel && matchSearch) {
+          r.style.display = '';
+          visibleCount++;
+        } else {
+          r.style.display = 'none';
+        }
+      });
+
+      const total = rows.length;
+      document.getElementById('reqsCounter').textContent = `Showing ${visibleCount} of ${total}`;
+    }
+
+    // --- Reset All Filters ---
+    function resetAllFilters() {
+      document.getElementById('findingSearch').value = '';
+      document.getElementById('findingSeverityFilter').value = '';
+      document.getElementById('findingChapterFilter').value = '';
+      document.getElementById('reqSearch').value = '';
+      document.getElementById('reqStatusFilter').value = '';
+      document.getElementById('reqChapterFilter').value = '';
+      document.getElementById('reqLevelFilter').value = '';
+
+      activeKpiStatus = null;
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('f-pill-all').classList.add('active');
+
+      filterFindings();
+      filterRequirements();
+    }
+
+    // Initial setup on load
+    document.addEventListener('DOMContentLoaded', () => {
+      filterFindings();
+      filterRequirements();
+    });
+    // Trigger immediately in case DOM is already ready
+    filterFindings();
+    filterRequirements();
+  </script>
+</body>
+</html>

@@ -5,6 +5,7 @@
 **Enterprise-Grade Static Security Verification & Compliance Auditor for AI Systems, Autonomous Agents, and Model Context Protocol (MCP)**
 
 [![OWASP AISVS](https://img.shields.io/badge/OWASP-AISVS%20v1.01%20%7C%20v1.02--dev-blue?style=for-the-badge&logo=owasp)](https://github.com/OWASP/AISVS)
+[![PyPI Version](https://img.shields.io/pypi/v/aisvs-scanner?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/aisvs-scanner/)
 [![Python Version](https://img.shields.io/badge/Python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-informational?style=for-the-badge&logo=python)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg?style=for-the-badge)](LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero%20(Pure%20Python)-brightgreen?style=for-the-badge)](#)
@@ -13,13 +14,14 @@
 
 <p align="center">
   <a href="#key-capabilities">Key Capabilities</a> •
-  <a href="#architecture">Architecture</a> •
+  <a href="#architecture--detection-engines">Architecture</a> •
   <a href="#quickstart">Quickstart</a> •
-  <a href="#chapter-coverage">12 AISVS Chapters</a> •
+  <a href="#12-aisvs-chapters-standard-coverage">12 AISVS Chapters</a> •
+  <a href="#declarative-yaml-rule-engine--custom-rules">YAML Rule Engine</a> •
   <a href="#interactive-html-dashboard">Interactive Dashboard</a> •
   <a href="#cli-reference">CLI Reference</a> •
   <a href="#cicd-integration">CI/CD Integration</a> •
-  <a href="#case-study">Real-World Benchmark</a>
+  <a href="#real-world-benchmark-case-studies">Benchmarks</a>
 </p>
 
 </div>
@@ -123,8 +125,8 @@ Inspects binary model files (`.pkl`, `.pt`, `.pth`, `.bin`, `.joblib`, `.ckpt`):
 - **Executable Format Detection**: Flags pickle-based formats that allow arbitrary Python code execution during deserialization (recommending memory-mapped formats like Safetensors or GGUF).
 - **Opcode Disassembly**: Safely parses the pickle bytecode stream without loading arbitrary objects to detect dangerous globals (`os.system`, `subprocess.Popen`, `posix_spawn`, `eval`, `builtins.exec`).
 
-### 4. Declarative Pattern & Call Engine (`rules/`)
-Over 175 rules covering prompt injection, token length enforcement, system message isolation, rate limits, structured JSON schema validation, and GenAI telemetry.
+### 4. Declarative YAML Rule Engine (`rules/yaml_loader.py` & `data/rules/*.yaml`)
+All 175+ built-in rules covering prompt injection, token length enforcement, system message isolation, rate limits, structured JSON schema validation, and GenAI telemetry are stored in declarative per-chapter YAML rule packs (`c01_training_data.yaml`–`c12_monitoring_logging.yaml`) and evaluated by a zero-dependency YAML rule loader with custom rule override support (`-r / --rules-path`).
 
 ---
 
@@ -163,7 +165,13 @@ For every requirement evaluated, the engine produces one of five verdicts:
 
 ## Quickstart
 
-### 1. Run Directly (No Installation Needed)
+### 1. Install from PyPI (Recommended)
+```bash
+pip install aisvs-scanner
+aisvs-scan scan /path/to/ai-project
+```
+
+### 2. Run Directly from Source (No Installation Needed)
 ```bash
 # Clone the scanner
 git clone https://github.com/mesutgungor/aisvs_scanner.git
@@ -171,12 +179,6 @@ cd aisvs_scanner
 
 # Run scan on any target
 ./bin/aisvs-scan scan /path/to/ai-project
-```
-
-### 2. Install as a CLI Tool
-```bash
-python3 -m pip install -e .
-aisvs-scan --help
 ```
 
 ---
@@ -317,9 +319,11 @@ jobs:
 
 ---
 
-## Real-World Benchmark Case Study
+## Real-World Benchmark Case Studies
 
-The scanner was benchmarked against [`assafelovic/gpt-researcher`](https://github.com/assafelovic/gpt-researcher) (30,000+ ⭐), a complex open-source autonomous agent framework containing multi-agent loops, vector retrieval, and MCP servers:
+### Case Study 1: [`assafelovic/gpt-researcher`](https://github.com/assafelovic/gpt-researcher) (30,000+ ⭐)
+
+The scanner was benchmarked against `gpt-researcher`, a complex open-source autonomous agent framework containing multi-agent loops, vector retrieval, and MCP servers:
 
 ```text
 === OWASP AISVS AI Security Verification Standard Scanner ===
@@ -334,7 +338,7 @@ Verification Summary:
   N/A:      2 (Features not present in target)
 ```
 
-### Key Real-World Findings Detected:
+#### Key Real-World Findings Detected:
 1. **Unpinned MCP Tool Execution (`AIS-MCPCFG-001` → AISVS #10.1.1)**:
    `.mcp.json` executed `uvx gpt-researcher` without an exact version pin or digest. A compromised package release would immediately execute arbitrary code upon client launch.
 2. **Unsafe Pickle Deserialization in Browser Scraper (`AIS-DESER-001` → AISVS #4.1.2, #6.1.1)**:
@@ -346,7 +350,36 @@ Verification Summary:
 5. **MCP Server Bound to `0.0.0.0` Without Host Verification (`AIS-MCP-013` → AISVS #10.3.3)**:
    FastAPI MCP server bound to all interfaces without Origin/Host verification middleware, exposing it to local DNS rebinding attacks.
 
-*(An interactive HTML report of this benchmark is included in `examples/reports/gpt_researcher_audit_report.html`)*.
+*(Interactive HTML report included in [`examples/reports/gpt_researcher_audit_report.html`](examples/reports/gpt_researcher_audit_report.html))*.
+
+### Case Study 2: [`pydantic/pydantic-ai`](https://github.com/pydantic/pydantic-ai) (`pydantic_ai_slim`)
+
+Scanned with the declarative YAML rule engine across 486 source files covering agent toolsets, embeddings, realtime audio/LLM pipelines, and MCP client/server integrations:
+
+```text
+=== OWASP AISVS AI Security Verification Standard Scanner ===
+Standard: OWASP AISVS v1.01 (Level 1-2) | Scanner v1.0.0
+Target: pydantic_ai_slim | Scanned 486 files in 72.28s
+
+Detected AI Components: agent, llm, mcp_client, mcp_server, media_generation, model_loading, multimodal, rag, serving
+
+Verification Summary:
+  PASS:    78 (Verified defense indicators present)
+  FAIL:     6 (Actionable security violations detected)
+  GAP:     59 (Applicable controls missing static indicators)
+  MANUAL:   7 (Human/operational verification required)
+  N/A:     17 (Features not present in target)
+```
+
+#### Key Findings Detected:
+1. **Special-Token Injection Allowed in Tokenizer (`AIS-PROMPT-002` → AISVS #2.1.7)**:
+   `pydantic_ai/realtime/openai_live.py` called `encoding.encode(text, allowed_special='all')`, allowing reserved control tokens (`<|im_start|>`, `<|endoftext|>`) in untrusted inputs.
+2. **Silent Input Truncation (`AIS-PROMPT-003` → AISVS #2.1.4)**:
+   `pydantic_ai/embeddings/bedrock.py` and `cohere.py` configured `truncate = 'END'` instead of rejecting over-length inputs.
+3. **Model Download Without Revision Pinning (`AIS-SUPPLY-001` → AISVS #6.1.2, #6.1.3)**:
+   `pydantic_ai/embeddings/sentence_transformers.py` loaded `SentenceTransformer('Qwen/Qwen3-Embedding-0.6B')` without an immutable commit SHA revision pin.
+
+*(Interactive HTML report included in [`examples/reports/pydantic_ai_audit_report.html`](examples/reports/pydantic_ai_audit_report.html))*.
 
 ---
 
