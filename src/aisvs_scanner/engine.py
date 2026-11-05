@@ -18,7 +18,7 @@ from .rules import all_rules
 from .rules.base import Rule
 from .walker import FileCtx, walk
 
-SCANNER_VERSION = "1.0.0"
+SCANNER_VERSION = "1.1.0"
 
 _SUPPRESSION_RE = re.compile(
     r"(?:#|//|<!--)\s*(?:aisvs:ignore|aisvs-ignore|noqa|nosec)(?::|\s+)?([A-Za-z0-9_-]*)",
