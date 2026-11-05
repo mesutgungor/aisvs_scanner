@@ -1,0 +1,115 @@
+# OWASP AISVS Chapter C7: Model Behavior & Output Safety
+# Declarative verification & evidence rules (14 rules)
+
+rules:
+  - id: AIS-OUTPUT-001
+    title: 'Model output executed or evaluated (JS/TS)'
+    kind: violation
+    requirements: ['7.1.1', '9.3.1', '4.1.1']
+    severity: high
+    langs: [js]
+    pattern: '\b(?:eval|new\s+Function|vm\.run\w*|execSync|exec|spawn|spawnSync)\s*\(\s*[^)\n]*\b(?:completion|llmOutput|aiResponse|aiOutput|modelOutput|message\.content|choices\[0\][\w.\[\]]*|result\.text|response\.text|generatedCode|llmResponse)\b'
+    message: 'LLM output flows into a code/command execution sink'
+    remediation: 'Never execute raw model output; validate against a strict schema, allow-list actions, and run any code in an isolated sandbox.'
+
+  - id: AIS-OUTPUT-002
+    title: 'Model output rendered as raw HTML'
+    kind: violation
+    requirements: ['7.3.3', '7.3.4']
+    severity: medium
+    langs: [js]
+    pattern: 'innerHTML\s*=\s*[^;\n]*\b(?:completion|response|aiResponse|answer|llm\w*|message\.content|choices\[0\][\w.\[\]]*)\b|dangerouslySetInnerHTML\s*=\s*\{\{\s*__html:\s*[^}]*\b(?:completion|response|answer|content|ai\w*|llm\w*|message)\b'
+    unless_file: 'DOMPurify|sanitize-?html|rehype-sanitize|sanitizeHtml|xss\('
+    message: 'Unsanitized model-generated HTML/markdown enables XSS and data-exfiltration via images/links'
+    remediation: 'Sanitize with DOMPurify/allow-listed renderers; block external images/links or restrict to an allow-list.'
+
+  - id: AIS-OUTPUT-003
+    title: 'Markdown rendering of model output without sanitization'
+    kind: violation
+    requirements: ['7.3.3', '7.3.4']
+    severity: low
+    confidence: low
+    pattern: '\b(?:marked|markdown|md\.render|markdownIt|showdown|mistune\.html|markdown2\.markdown|markdown\.markdown)\s*\(\s*[^)\n]*\b(?:completion|response|answer|llm\w*|ai_?\w*|message\.content|content)\b'
+    unless_file: 'DOMPurify|sanitize|bleach|nh3|rehype-sanitize|escape\('
+    message: 'Rendered markdown can embed tracking images / links controlled by injected content'
+    remediation: 'Sanitize rendered HTML and disable remote image loading or allow-list domains.'
+
+  - id: AIS-OUTPUT-004
+    title: 'LLM call without output length bound'
+    kind: violation
+    requirements: ['7.1.2']
+    severity: low
+    langs: code
+    callee: '\b(?:\w+\.)*(?:chat\.completions\.create|completions\.create|responses\.create|generate_content(?:_async)?|ChatOpenAI|AzureChatOpenAI|ChatOllama|ChatGoogleGenerativeAI|ChatMistralAI|ChatGroq)\b'
+    missing_any: 'max_tokens|max_completion_tokens|max_output_tokens|maxTokens|maxOutputTokens|max_new_tokens|num_predict|max_tokens_to_sample|generation_config|GenerationConfig|\bconfig\s*=|model_kwargs|\bparams\b|\boptions\b'
+    max_hits_per_file: 3
+    message: 'No max-token/termination control on a model call; runaway generation increases cost and exfiltration capacity'
+    remediation: 'Set max_tokens/max_output_tokens and stop sequences on every call.'
+
+  - id: AIS-EV-ACTION-ON-REFUSAL
+    title: 'Safe handling of refusals / unparsable responses before acting'
+    kind: evidence
+    requirements: ['7.1.3']
+    confidence: low
+    pattern: 'finish_reason\s*(?:==|!=|in|not in)|stop_reason\s*(?:==|!=|in|not in)|\brefusal\b|\.refusal\b|content_filter|OutputParserException|JSONDecodeError|ValidationError|parse_error|ResponseParseError'
+
+  - id: AIS-EV-CONFIDENCE
+    title: 'Answer confidence estimation'
+    kind: evidence
+    requirements: ['7.2.1']
+    confidence: low
+    pattern: '\blogprobs\b|log_probs|confidence[_ ]?(?:score|threshold|estimat)|self[_-]?consistency|\bselfcheck\w*|semantic[_ ]entropy|token_probabilit|uncertainty|\bconformal\b'
+
+  - id: AIS-EV-CONFIDENCE-GATE
+    title: 'Low-confidence fallback / block'
+    kind: evidence
+    requirements: ['7.2.2']
+    confidence: low
+    pattern: 'confidence\w*\s*(?:<|<=|>|>=)\s*[\w.]+|(?:min_confidence|CONFIDENCE_THRESHOLD|confidence_threshold)\b|fallback[_ ]message|low_confidence|I (?:don''t|do not) know'
+
+  - id: AIS-EV-OUT-SANITIZE
+    title: 'Output sanitization / outbound-request & link control'
+    kind: evidence
+    requirements: ['7.3.3', '7.3.4']
+    pattern: 'DOMPurify|bleach\.clean|sanitize[-_]?html|html\.escape|markupsafe|rehype-sanitize|sanitizeHtml|\bnh3\b|strip_tags|url[_ ]allow[_ ]?list|safe_url|link[_ ]allowlist|disable_images|img-src|Content-Security-Policy|allowed_domains|allowed_hosts'
+
+  - id: AIS-EV-OUT-SCHEMA
+    title: 'Structured output / schema validation of model responses'
+    kind: evidence
+    requirements: ['7.1.1']
+    pattern: 'response_format|json_schema|with_structured_output|PydanticOutputParser|StructuredOutputParser|JsonOutputParser|\boutput_type\s*=|\bresult_type\s*=|\binstructor\b|\boutlines\b|model_validate(?:_json)?\(|\bTypeAdapter\b|output_schema|responseSchema|response_schema|zodResponseFormat|generateObject|structured_output|tool_choice\s*=\s*\{'
+
+  - id: AIS-EV-PROMPT-LEAK
+    title: 'System-prompt / backend-data disclosure filtering'
+    kind: evidence
+    requirements: ['7.3.2']
+    pattern: 'canary[_ -]?(?:token|word)|prompt[_ -]?leak|system[_ -]prompt[_ -](?:leak|disclos|extract)|leak[_ ]detect|contains_system_prompt|output[_ ]filter|response[_ ]filter|OutputGuard|output_guardrail|output_guard|\bOutputRails?\b'
+
+  - id: AIS-EV-RAG-CITE
+    title: 'RAG source attribution'
+    kind: evidence
+    requirements: ['7.4.1']
+    requires: [rag]
+    pattern: 'return_source_documents|source_documents|\bcitations?\b|source_nodes|include_citations|\battribution\b|\"sources\"|response\.sources|\bcite\b'
+
+  - id: AIS-EV-RAG-CITE-META
+    title: 'Attribution derived from retrieval metadata'
+    kind: evidence
+    requirements: ['7.4.2', '7.4.3']
+    confidence: low
+    requires: [rag]
+    pattern: 'metadata\[[\"'']source|metadata\.get\([\"'']source|source_nodes|return_source_documents|node\.metadata|doc\.metadata|chunk_id|citation[_ ]verif|verify_claims|grounded'
+
+  - id: AIS-EV-VERIFY-HIGHRISK
+    title: 'Additional verification for high-risk responses'
+    kind: evidence
+    requirements: ['7.2.3']
+    confidence: low
+    pattern: 'verification[_ ]step|second[_ ]opinion|verify_answer|fact[_-]?check|cross[_-]?check|human[_ ]review|judge[_ ]model|LLM-as-a-judge|llm_judge|\bverifier\b|high[_-]?risk'
+
+  - id: AIS-EV-WATERMARK-MEDIA
+    title: 'Generated-media watermarking / provenance'
+    kind: evidence
+    requirements: ['7.4.4']
+    requires: [media_generation]
+    pattern: 'watermark|synthid|\bc2pa\b|content[_ ]credentials|invisible[_-]watermark|stable_signature|tree[_-]?ring'

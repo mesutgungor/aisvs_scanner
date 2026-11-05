@@ -8,7 +8,13 @@ from aisvs_scanner import catalog
 from aisvs_scanner.analyzers import artifact, mcp_config, taint
 from aisvs_scanner.engine import ScanConfig, Scanner
 from aisvs_scanner.models import Location, Severity, Status
-from aisvs_scanner.rules import all_rules
+from aisvs_scanner.rules import RULES_DATA_DIR, all_rules
+from aisvs_scanner.rules.yaml_loader import (
+    dump_rules_yaml,
+    load_rules_from_file,
+    parse_yaml_PurePython,
+    rule_from_dict,
+)
 from aisvs_scanner.walker import FileCtx
 
 
@@ -43,6 +49,54 @@ class TestRulesAndRegistry(unittest.TestCase):
         for r in all_rules():
             for req_id in r.reqs:
                 self.assertIn(req_id, all_req_ids, f"Rule {r.id} references invalid requirement {req_id}")
+
+    def test_yaml_rule_packs_pure_python_and_roundtrip(self):
+        yaml_files = sorted(RULES_DATA_DIR.glob("*.yaml"))
+        self.assertEqual(len(yaml_files), 12)
+        total = 0
+        for yf in yaml_files:
+            raw = yf.read_text(encoding="utf-8")
+            parsed_pure = parse_yaml_PurePython(raw)
+            pure_rules = [rule_from_dict(d) for d in parsed_pure["rules"]]
+            file_rules = load_rules_from_file(yf)
+            self.assertEqual(pure_rules, file_rules)
+            # Round-trip dump and re-parse
+            dumped = dump_rules_yaml(file_rules, header="Test")
+            rt_rules = [rule_from_dict(d) for d in parse_yaml_PurePython(dumped)["rules"]]
+            self.assertEqual(rt_rules, file_rules)
+            total += len(file_rules)
+        self.assertEqual(total, 175)
+
+    def test_custom_yaml_rule_override_and_execution(self):
+        custom_yaml = """
+rules:
+  - id: CUSTOM-TEST-001
+    kind: violation
+    reqs: ["2.1.1"]
+    title: "Forbidden internal prompt marker"
+    severity: critical
+    confidence: high
+    langs: [python]
+    patterns:
+      - 'FORBIDDEN_PROMPT_MARKER'
+    remediation: "Remove forbidden marker."
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            td = Path(tmpdir)
+            rule_file = td / "my_rules.yaml"
+            rule_file.write_text(custom_yaml, encoding="utf-8")
+            target_py = td / "service.py"
+            target_py.write_text('x = "FORBIDDEN_PROMPT_MARKER"\n', encoding="utf-8")
+
+            cfg = ScanConfig(
+                target=td,
+                custom_rules=[str(rule_file)],
+                no_builtin_rules=True,
+            )
+            res = Scanner(cfg).scan()
+            self.assertEqual(len(res.findings), 1)
+            self.assertEqual(res.findings[0].rule_id, "CUSTOM-TEST-001")
+            self.assertEqual(res.findings[0].severity, Severity.CRITICAL)
 
 
 class TestASTTaintAnalyzer(unittest.TestCase):

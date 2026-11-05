@@ -1,0 +1,259 @@
+# OWASP AISVS Chapter C10: Model Context Protocol (MCP) Security
+# Declarative verification & evidence rules (29 rules)
+
+rules:
+  - id: AIS-MCP-001
+    title: 'Permissive tool schema (additionalProperties true)'
+    kind: violation
+    requirements: ['10.4.3', '10.4.4']
+    severity: low
+    requires: [mcp_server, agent]
+    pattern: 'additionalProperties[\"'']?\s*[:=]\s*(?:true|True)'
+    message: 'Tools accept undeclared parameters'
+    remediation: 'Set additionalProperties:false / extra=forbid and enforce maxLength/size limits.'
+
+  - id: AIS-MCP-010
+    title: 'JWT verification disabled'
+    kind: violation
+    requirements: ['10.2.2', '10.2.1']
+    severity: high
+    langs: code
+    requires: [mcp_server]
+    pattern: 'verify_signature[\"'']?\s*[:=]\s*False|verify_aud[\"'']?\s*[:=]\s*False|verify_exp[\"'']?\s*[:=]\s*False|verify_iss[\"'']?\s*[:=]\s*False|algorithms\s*=\s*\[\s*[\"'']none[\"'']|jwt\.decode\([^)]*verify\s*=\s*False|ignoreExpiration\s*:\s*true'
+    message: 'Access tokens are accepted without signature/audience/expiry validation'
+    remediation: 'Validate issuer, audience (this server), expiry and scopes on every request per OAuth 2.1.'
+
+  - id: AIS-MCP-011
+    title: 'Token passthrough to downstream APIs'
+    kind: violation
+    requirements: ['10.2.7']
+    severity: high
+    langs: code
+    requires: [mcp_server]
+    pattern: '[\"'']?Authorization[\"'']?\s*[:=]\s*(?:f?[\"'']Bearer\s*\{?\s*)?(?:request|req|ctx|context|incoming)[\w.\[\]\"'']*(?:headers|token|auth)[\w.\[\]\"'']*|forward[_-]?(?:user[_-]?)?(?:token|auth)|passthrough[_-]?token'
+    message: 'Client-presented token is forwarded to another service (confused-deputy / token passthrough)'
+    remediation: 'Accept only tokens issued for this server; use token exchange (OBO) to obtain a separately scoped downstream token.'
+
+  - id: AIS-MCP-012
+    title: 'MCP DNS-rebinding protection disabled'
+    kind: violation
+    requirements: ['10.3.3']
+    severity: high
+    requires: [mcp_server]
+    pattern: 'enable_dns_rebinding_protection\s*=\s*False|enableDnsRebindingProtection\s*:\s*false'
+    message: 'Origin/Host header validation turned off'
+    remediation: 'Enable DNS-rebinding protection and set allowed_hosts/allowed_origins.'
+
+  - id: AIS-MCP-013
+    title: 'MCP HTTP server bound to all interfaces'
+    kind: violation
+    requirements: ['10.3.3', '10.3.2']
+    severity: medium
+    langs: [code, dockerfile, shell]
+    requires: [mcp_server]
+    pattern: 'host\s*=\s*[\"'']0\.0\.0\.0[\"'']|--host[ =]0\.0\.0\.0|listen\(\s*\d+\s*,\s*[\"'']0\.0\.0\.0[\"'']|HOST\s*=\s*[\"'']0\.0\.0\.0[\"'']|app\.listen\(\s*\d+\s*\)'
+    unless_file: 'enable_dns_rebinding_protection\s*=\s*True|allowed_hosts|allowedHosts|TransportSecuritySettings'
+    message: 'Locally-intended MCP server is reachable from the network without Origin/Host validation'
+    remediation: 'Bind to 127.0.0.1 for local servers; for remote servers require TLS + auth and validate Origin and Host.'
+
+  - id: AIS-MCP-014
+    title: 'Wildcard CORS on MCP endpoint'
+    kind: violation
+    requirements: ['10.3.3']
+    severity: medium
+    langs: code
+    requires: [mcp_server]
+    pattern: 'allow_origins\s*=\s*\[\s*[\"'']\*[\"'']|Access-Control-Allow-Origin[\"'']?\s*[:,]\s*[\"'']\*|\borigin:\s*[\"'']\*[\"'']|\bcors\(\s*\)'
+    message: 'Any web origin can talk to the MCP server'
+    remediation: 'Allow-list trusted origins only.'
+
+  - id: AIS-MCP-015
+    title: 'Plaintext (http://) remote MCP endpoint'
+    kind: violation
+    requirements: ['10.3.1']
+    severity: high
+    requires: [mcp_client, mcp_server]
+    pattern: '[\"''`]http://(?!localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|host\.docker\.internal|\$|\{)[\w.-]+(?::\d+)?/(?:mcp|sse|messages)[\w/]*'
+    message: 'Remote MCP traffic (tokens, tool calls) is unencrypted'
+    remediation: 'Use authenticated, encrypted streamable HTTP (https://).'
+
+  - id: AIS-MCP-016
+    title: 'MCP server persists access tokens'
+    kind: violation
+    requirements: ['10.2.3']
+    severity: medium
+    confidence: low
+    langs: code
+    requires: [mcp_server]
+    pattern: '(?:redis|db|database|store|cache|session)\w*\.(?:set|put|insert|save|write)\w*\([^)\n]*(?:access_token|refresh_token)|(?:access_token|refresh_token)[^\n]{0,60}(?:INSERT\s+INTO|\.dump\(|write_text\(|localStorage\.setItem)|open\([^)]*token[^)]*[\"'']w'
+    message: 'Resource servers must not store access tokens or user credentials'
+    remediation: 'Validate tokens statelessly; never persist inbound credentials.'
+
+  - id: AIS-MCP-017
+    title: 'Elicitation used to collect secrets or payment data'
+    kind: violation
+    requirements: ['10.4.18']
+    severity: high
+    langs: code
+    requires: [mcp_server]
+    pattern: 'elicit\w*\([^)]*(?:password|api[_ ]?key|secret|credit[_ ]?card|\bcvv\b|\bssn\b)'
+    message: 'Form-mode elicitation exposes secrets to the client/model path'
+    remediation: 'Use URL-mode elicitation to a first-party page for credentials/payments.'
+
+  - id: AIS-MCP-018
+    title: 'Remote JSON-Schema $ref resolution enabled'
+    kind: violation
+    requirements: ['10.4.14', '10.4.15']
+    severity: medium
+    langs: [code, json, yaml]
+    requires: [mcp_server, mcp_client]
+    pattern: '\bRefResolver\s*\(|resolve_remote\s*=\s*True|\$RefParser\.dereference|resolve:\s*\{\s*external:\s*true|loadSchema\s*:|[\"'']\$ref[\"'']\s*:\s*[\"'']https?://'
+    message: 'Network $ref dereferencing enables SSRF and schema substitution'
+    remediation: 'Disable external reference resolution; pre-bundle schemas and fail closed on unresolved refs.'
+
+  - id: AIS-MCP-019
+    title: 'Tool/skill description contains instruction-injection phrasing'
+    kind: violation
+    requirements: ['10.4.2', '10.4.8']
+    severity: high
+    langs: [config, js, json, python, text, yaml]
+    path_globs: ['*mcp*', '*tool*', '.cursorrules', '.windsurfrules', 'AGENTS.md', 'CLAUDE.md', 'GEMINI.md', '*.mdc', 'SKILL.md', '*rules*', '*instructions*', 'copilot-instructions.md']
+    pattern: 'ignore (?:all |any )?(?:previous|prior|above) instructions|<IMPORTANT>|do not (?:tell|mention|inform|reveal)[^\n]{0,30}(?:the )?user|before (?:using|calling) this tool[^\n]{0,80}(?:read|send|include|fetch)|exfiltrat\w+|send[^\n]{0,60}(?:to|via)\s+https?://|\bsystem prompt\b[^\n]{0,40}(?:ignore|override|replace)'
+    message: 'Possible tool-poisoning / rules-file injection text'
+    remediation: 'Review and remove; pin and hash-verify tool definitions and re-approve on any change.'
+
+  - id: AIS-EV-MCP-ALLOWLIST
+    title: 'MCP server allow-list / registry'
+    kind: evidence
+    requirements: ['10.1.2']
+    requires: [mcp_client]
+    pattern: 'allowed[_-]?(?:mcp[_-]?)?servers|mcp[_-]?allow|server[_-]?allowlist|approved[_-]?servers|allowedMcpServers|enabledMcpjsonServers|mcp[_ ]registry'
+
+  - id: AIS-EV-MCP-CACHE
+    title: 'Private cache scope for user-specific MCP results'
+    kind: evidence
+    requirements: ['10.4.16', '10.4.17']
+    confidence: low
+    requires: [mcp_server, mcp_client]
+    pattern: 'Cache-Control[^\n]{0,40}private|cacheScope|cache_scope|scope[\"'']?\s*[:=]\s*[\"'']private'
+
+  - id: AIS-EV-MCP-CLAIMS
+    title: 'Issuer/audience/scope claim validation'
+    kind: evidence
+    requirements: ['10.2.2', '10.2.7', '10.2.5']
+    requires: [mcp_server]
+    pattern: 'audience\s*[=:]|\baud[\"'']?\s*[:=]|issuer\s*[=:]|\biss[\"'']?\s*[:=]|required_scopes|requiredScopes|scopes_supported|resource_server_url|oauth-protected-resource|\bRFC ?8707\b|resource\s*indicator'
+
+  - id: AIS-EV-MCP-CONSENT
+    title: 'User consent for MCP servers'
+    kind: evidence
+    requirements: ['10.4.7', '10.4.9', '10.4.10']
+    confidence: low
+    requires: [mcp_client]
+    pattern: 'trust[_ ]this[_ ]server|approve[_ ]server|allow[_ ]server|enableAllProjectMcpServers[\"'']?\s*[:=]\s*false|mcp[_-]?trust|ServerApproval|mcp[_ ]consent|per[_-]client[_ ]consent|consent[_ ]per[_ ]client|\bconsent\b'
+
+  - id: AIS-EV-MCP-ORIGIN
+    title: 'Origin/Host header validation'
+    kind: evidence
+    requirements: ['10.3.3']
+    requires: [mcp_server]
+    pattern: 'enable_dns_rebinding_protection\s*=\s*True|TransportSecuritySettings|allowed_hosts|allowed_origins|allowedHosts|allowedOrigins|enableDnsRebindingProtection\s*:\s*true|validate[_ ]origin|check[_ ]origin|TrustedHostMiddleware|dnsRebindingProtection'
+
+  - id: AIS-EV-MCP-PAYLOAD
+    title: 'Payload size limits'
+    kind: evidence
+    requirements: ['10.4.5']
+    requires: [mcp_server]
+    pattern: 'max_body_size|max_request_size|client_max_body_size|(?:express|bodyParser)\.json\(\{\s*limit|MAX_BODY|max_content_length|maxPayload|max_message_size|maxMessageSize|request_size_limit|body_limit|DefaultBodyLimit|MaxBytesReader|LimitRequestBody'
+
+  - id: AIS-EV-MCP-PROTOVER
+    title: 'Minimum protocol version enforced'
+    kind: evidence
+    requirements: ['10.3.4', '10.3.6']
+    confidence: low
+    requires: [mcp_server, mcp_client]
+    pattern: 'MIN_PROTOCOL|minProtocolVersion|min_protocol_version|SUPPORTED_PROTOCOL_VERSIONS|MCP-Protocol-Version'
+
+  - id: AIS-EV-MCP-REF-SAFE
+    title: 'External $ref resolution disabled'
+    kind: evidence
+    requirements: ['10.4.14', '10.4.15']
+    confidence: low
+    requires: [mcp_server, mcp_client]
+    pattern: 'resolve_remote\s*=\s*False|external:\s*false|allow_remote_refs\s*=\s*False|no[_-]?remote[_-]?refs|referencing\.Registry'
+
+  - id: AIS-EV-MCP-REPLAY
+    title: 'Replay protection (nonce + timestamp) / requestState integrity'
+    kind: evidence
+    requirements: ['10.4.6', '10.2.8', '10.2.10']
+    confidence: low
+    requires: [mcp_server]
+    pattern: 'nonce[^\n]{0,80}timestamp|timestamp[^\n]{0,80}nonce|requestState[^\n]{0,80}(?:hmac|sign|signature|jwt|mac)|(?:hmac|sign)[^\n]{0,80}requestState|\bjti\b|used_nonce|single[_ ]use'
+
+  - id: AIS-EV-MCP-SCHEMA-BOUNDS
+    title: 'Resource bounds on schema validation'
+    kind: evidence
+    requirements: ['10.4.13']
+    confidence: low
+    requires: [mcp_server, mcp_client]
+    pattern: 'max_schema_depth|maxDepth|max_depth|maxProperties|max_nesting|MAX_SCHEMA|validation[_ ]timeout|complexity[_ ]limit'
+
+  - id: AIS-EV-MCP-SCOPE
+    title: 'Scope-filtered tools/list and per-call authorization'
+    kind: evidence
+    requirements: ['10.2.4', '10.2.5']
+    confidence: low
+    requires: [mcp_server]
+    pattern: 'required[_ ]?scopes|has_scope|check_scope|hasScope|require_scope|filter_tools|list_tools[^\n]{0,80}(?:scope|permission|auth)|tool[_ ]permission'
+
+  - id: AIS-EV-MCP-SENDER-CONSTRAINED
+    title: 'Sender-constrained tokens (mTLS/DPoP)'
+    kind: evidence
+    requirements: ['10.3.5']
+    requires: [mcp_server]
+    pattern: '\bDPoP\b|\bjkt\b|\bmtls\b|mutual[_ ]tls|ssl_verify_client|RFC ?9449|RFC ?8705'
+
+  - id: AIS-EV-MCP-SNAPSHOT
+    title: 'Tool-definition pinning / change re-approval'
+    kind: evidence
+    requirements: ['10.4.8']
+    requires: [mcp_client]
+    pattern: 'tool[_ ]?(?:definition|description|schema)s?[_ ]?(?:hash|snapshot|pin|digest|fingerprint|checksum)|pin(?:ned)?[_ ]tools|tools_hash|tool[_-]?pinning|rug[_ -]?pull|approved_tool_hash|ToolSnapshot|mcp-scan|mcp_scan'
+
+  - id: AIS-EV-MCP-STDIO-LOCAL
+    title: 'stdio transport limited to local use'
+    kind: evidence
+    requirements: ['10.3.2']
+    confidence: low
+    requires: [mcp_server]
+    pattern: 'transport\s*[=:]\s*[\"'']stdio[\"'']|StdioServerTransport|stdio_server\('
+
+  - id: AIS-EV-MCP-TLS
+    title: 'TLS for remote transport'
+    kind: evidence
+    requirements: ['10.3.1']
+    confidence: low
+    requires: [mcp_server, mcp_client]
+    pattern: 'ssl_keyfile|ssl_certfile|https\.createServer|tls\.createServer|ssl\.create_default_context|\bcertbot\b|\btraefik\b|\bcaddy\b|ingress[\s\S]{0,200}tls:|\bhttps://'
+
+  - id: AIS-EV-MCP-TOKEN
+    title: 'MCP request token validation'
+    kind: evidence
+    requirements: ['10.2.1']
+    requires: [mcp_server]
+    pattern: 'TokenVerifier|token_verifier|verify_token|BearerAuth|JWTVerifier|requireBearerAuth|OAuthServerProvider|mcpAuthRouter|ProxyOAuthServerProvider|AuthSettings|auth_server_provider|jwt\.decode|jwtVerify|\bjose\b|\bPyJWT\b|\bauthlib\b|\bintrospect\w*|\bjwks(?:_uri)?\b|RemoteAuthProvider|auth\s*=\s*\w+Provider'
+
+  - id: AIS-EV-MCP-VERIFIED-SOURCE
+    title: 'Verified/pinned MCP components'
+    kind: evidence
+    requirements: ['10.1.1']
+    confidence: low
+    requires: [mcp_client, mcp_server]
+    pattern: '--require-hashes|--hash=sha256|npm\s+ci\b|npm\s+audit\s+signatures|--provenance|cosign\s+verify|slsa-verifier|@sha256:[0-9a-f]{16,}'
+
+  - id: AIS-EV-STRICT-PARAMS
+    title: 'Unknown/oversized parameters rejected'
+    kind: evidence
+    requirements: ['10.4.3', '10.4.4']
+    requires: [mcp_server, agent]
+    pattern: 'extra\s*=\s*[\"'']forbid[\"'']|[\"'']extra[\"'']\s*:\s*[\"'']forbid|additionalProperties[\"'']?\s*[:=]\s*(?:false|False)|\.strict\(\)|\bstrict\s*:\s*true|StrictModel|ConfigDict\([^)]*forbid'

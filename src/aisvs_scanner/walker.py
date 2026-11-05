@@ -34,6 +34,8 @@ ARTIFACT_EXTS = {
 MAX_TEXT_BYTES = 2_000_000
 MAX_ARTIFACT_SCAN_BYTES = 2_000_000_000
 
+_BUILTIN_RULES_DIR = (Path(__file__).resolve().parent / "data" / "rules").resolve()
+
 
 @dataclass
 class FileCtx:
@@ -138,6 +140,8 @@ def walk(
             )
         for fn in sorted(filenames):
             p = Path(dirpath) / fn
+            if _BUILTIN_RULES_DIR in p.resolve().parents:
+                continue
             rel = os.path.relpath(p, base)
             if excluded(rel) or p.is_symlink():
                 continue

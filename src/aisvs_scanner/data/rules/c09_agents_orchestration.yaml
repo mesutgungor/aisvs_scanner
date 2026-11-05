@@ -1,0 +1,196 @@
+# OWASP AISVS Chapter C9: Orchestration & Agentic Action
+# Declarative verification & evidence rules (25 rules)
+
+rules:
+  - id: AIS-AGENT-001
+    title: 'Dangerous-execution flags enabled on agent tooling'
+    kind: violation
+    requirements: ['9.2.1', '9.3.1', '4.1.2']
+    severity: high
+    pattern: 'allow_dangerous_code\s*=\s*True|allow_dangerous_requests\s*=\s*True|allow_dangerous_deserialization\s*=\s*True|allow_code_execution\s*=\s*True|unsafe_allow_html\s*=\s*True'
+    message: 'Framework safety interlock explicitly disabled'
+    remediation: 'Remove the flag; move the capability into a sandboxed tool with human approval for impactful actions.'
+
+  - id: AIS-AGENT-002
+    title: 'Agent tool executes shell/Python on the host'
+    kind: violation
+    requirements: ['9.3.1', '4.1.1', '9.2.1']
+    severity: high
+    langs: code
+    pattern: '\b(?:ShellTool|PythonREPLTool|PythonAstREPLTool|BashProcess|TerminalTool|LocalCommandLineCodeExecutor|UnsafeLocalCommandLineCodeExecutor|PythonREPL|ShellToolkit)\b|\bcreate_(?:pandas_dataframe|csv|python|spark_dataframe)_agent\b'
+    unless_file: '\b(?:e2b|gvisor|firecracker|nsjail|firejail|bubblewrap|RestrictedPython|pyodide|DockerCommandLineCodeExecutor|Sandbox\w*|docker\.from_env|modal)\b'
+    message: 'Model-controlled code/command execution without a sandbox'
+    remediation: 'Execute generated code only in an isolated sandbox (gVisor/Firecracker/E2B/Docker with no network) with least privilege and approval gates.'
+
+  - id: AIS-AGENT-003
+    title: 'Auto-approval / permission bypass for agent actions'
+    kind: violation
+    requirements: ['9.2.1', '10.4.7']
+    severity: high
+    pattern: 'bypassPermissions|dangerously-skip-permissions|dangerously-bypass-approvals|--yolo\b|--auto-approve\b|--trust-all-tools|auto[_-]?approve\s*[:=]\s*(?:true|True)|YOLO_MODE|human_input_mode\s*=\s*[\"'']NEVER[\"'']|\bdangerouslyAllowBrowser\b|enableAllProjectMcpServers[\"'']?\s*[:=]\s*true'
+    message: 'Privileged/irreversible actions can run without explicit human approval'
+    remediation: 'Require verified human approval for high-impact tools; scope auto-approval to read-only, allow-listed tools.'
+
+  - id: AIS-AGENT-004
+    title: 'LLM-driven package installation'
+    kind: violation
+    requirements: ['9.3.7', '6.1.2']
+    severity: medium
+    confidence: low
+    langs: code
+    requires: [agent, llm]
+    pattern: '(?:subprocess\.\w+|os\.system|execSync|exec|spawn)\([^\n]*(?:pip|pip3|npm|npx|uvx|cargo)\s+(?:-y\s+)?install[^\n]*(?:\{|\$\{|%s|\+\s*\w)'
+    message: 'Agent can install arbitrary dependencies named at runtime'
+    remediation: 'Verify requested packages against an approved registry/allow-list before install.'
+
+  - id: AIS-PROMPT-004
+    title: 'Secret or credential embedded in prompt text'
+    kind: violation
+    requirements: ['9.5.4', '7.3.2']
+    severity: high
+    langs: [code, json, text, yaml]
+    pattern: '(?:system_prompt|SYSTEM_PROMPT|system_message|[\"'']role[\"'']\s*:\s*[\"'']system[\"'']|SystemMessage)[^\n]{0,200}(?:api[_-]?key|password|passwd|secret|bearer|token)\s*(?:is|[:=])\s*[\"'']?[A-Za-z0-9_\-./+]{8,}|f[\"''][^\"''\n]*\{\s*(?:os\.environ\[?[^}]*|os\.getenv\([^)]*\)|\w*(?:API_KEY|SECRET|PASSWORD|TOKEN)\w*)\s*\}[^\"''\n]*[\"''][^\n]*(?:prompt|messages|system)'
+    unless_line: 'your[_-]?|xxxx|example|placeholder|<[^>]+>|\*{3}|dummy|changeme|redacted|fake|test[_-]?key|sk-\.\.\.|\.{3}'
+    message: 'Credentials placed in model context can be extracted via prompt injection or logged by providers'
+    remediation: 'Keep secrets in backend tool execution only; never include them in prompts, context windows or tool results.'
+
+  - id: AIS-EV-ACTION-BINDING
+    title: 'Signed/non-repudiable agent actions'
+    kind: evidence
+    requirements: ['9.4.2']
+    confidence: low
+    requires: [agent]
+    pattern: 'non[_-]repudiation|http[_ ]message[_ ]signature|rfc9421|\bJWS\b|signed[_ ](?:action|step|receipt)'
+
+  - id: AIS-EV-AGENT-ID
+    title: 'Per-agent cryptographic identity'
+    kind: evidence
+    requirements: ['9.4.1', '4.3.1']
+    pattern: '\bspiffe\b|\bspire\b|\bsvid\b|workload[_ -]identity|managed[_ -]?identity|DefaultAzureCredential|\bIRSA\b|\bmTLS\b|mutual[_ ]tls|client[_-]cert|did:web|verifiable[_ ]credential|agent[_ ]identity|entra[_ ]agent'
+
+  - id: AIS-EV-AI-REVIEW
+    title: 'AI-augmented review of planned high-risk actions'
+    kind: evidence
+    requirements: ['9.2.6', '9.2.7']
+    confidence: low
+    requires: [agent]
+    pattern: 'ai[_ -]review|llm[_ -]review|reviewer[_ -]agent|safety[_ -]reviewer|critic[_ -]agent|plan[_ -]review|action[_ -]review|AlignmentCheck|agent_guard|\bguardian\b'
+
+  - id: AIS-EV-ALLOWLIST
+    title: 'Allow-list for external resources / tools named by the model'
+    kind: evidence
+    requirements: ['9.3.7', '9.5.1']
+    pattern: 'allowed_tools|tool_allowlist|allowedTools|ALLOWED_(?:PACKAGES|DOMAINS|HOSTS|REGISTR\w*|TOOLS|URLS)|approved[_ ]registry|trusted[_ ]registry|package[_ ]allowlist|allowed_domains|domain_allowlist|url_allowlist|egress[_ ]allow|\bNetworkPolicy\b|permissions\.allow|tool_permission|authorize_tool|ToolPolicy'
+
+  - id: AIS-EV-APPROVAL
+    title: 'Human approval gate for high-impact actions'
+    kind: evidence
+    requirements: ['9.2.1']
+    requires: [agent]
+    pattern: 'interrupt_before|interrupt_after|\binterrupt\(|human_in_the_loop|HumanInTheLoop|HumanApproval|require_approval|requires_approval|needs_approval|approval_required|human_input_mode\s*=\s*[\"''](?:ALWAYS|TERMINATE)[\"'']|confirm_action|user_confirmation|tool_approval|approval_mode|ApprovalPolicy|permission_mode|canUseTool|can_use_tool|needsApproval|requireApproval'
+
+  - id: AIS-EV-APPROVAL-BINDING
+    title: 'Cryptographically bound / single-use approvals'
+    kind: evidence
+    requirements: ['9.2.8', '9.2.9']
+    confidence: low
+    requires: [agent]
+    pattern: 'nonce[^\n]{0,80}approv|approv[^\n]{0,80}nonce|approval[_ ]token|signed[_ ]approval|single[_-]use[^\n]{0,40}approv'
+
+  - id: AIS-EV-APPROVAL-TIMEOUT
+    title: 'Approval gate expires / denies on timeout'
+    kind: evidence
+    requirements: ['9.6.2']
+    confidence: low
+    requires: [agent]
+    pattern: 'approval[_ ]timeout|approv\w*[^\n]{0,60}(?:expire|timeout|ttl)|(?:expire|timeout)[^\n]{0,60}approv\w*|default[_ ]deny'
+
+  - id: AIS-EV-BUDGET
+    title: 'Execution budget / loop limit'
+    kind: evidence
+    requirements: ['9.1.2']
+    requires: [agent]
+    pattern: 'max_iterations|max_steps|max_turns|recursion_limit|max_tool_calls|max_rounds|max_loops|UsageLimits|request_limit|total_tokens_limit|token_budget|spend_limit|\bmax_budget\b|MaxMessageTermination|max_consecutive_auto_reply|max_cost|budget_usd|maxSteps|stopWhen|stepCountIs'
+
+  - id: AIS-EV-CONTAINMENT
+    title: 'Automatic containment on policy violation'
+    kind: evidence
+    requirements: ['9.3.8']
+    confidence: low
+    pattern: 'quarantine[_ ]tool|disable[_ ]tool|revoke[_ ]permission|auto[_ ]?contain|isolate[_ ]tool|tool[_ ]disabled|\bcontainment\b'
+
+  - id: AIS-EV-DELEGATION-ATTEN
+    title: 'Delegated authority attenuation'
+    kind: evidence
+    requirements: ['9.5.7', '9.5.5']
+    confidence: low
+    pattern: 'attenuat\w+|downscope|scope[_ ]?(?:subset|intersect|narrow)|delegation[_ ]polic'
+
+  - id: AIS-EV-KILLSWITCH
+    title: 'Kill-switch / circuit breaker'
+    kind: evidence
+    requirements: ['9.1.3', '9.6.1']
+    pattern: 'kill[_-]?switch|emergency[_-]?stop|panic[_-]?button|halt[_-]?all|stop_all_agents|\bcircuit[_-]?breaker\b|\bpybreaker\b|\bopossum\b|\bcockatiel\b|resilience4j|disable_ai|ai_enabled|llm_enabled|LaunchDarkly|\bunleash\b'
+
+  - id: AIS-EV-KILLSWITCH-OOB
+    title: 'Out-of-band kill-switch channel'
+    kind: evidence
+    requirements: ['9.6.3']
+    confidence: low
+    pattern: 'kill[_-]?switch[^\n]{0,80}(?:out[_ -]of[_ -]band|separate|control[_ -]plane|admin[_ -]api|remote[_ -]config)|(?:out[_ -]of[_ -]band|control[_ -]plane)[^\n]{0,80}kill'
+
+  - id: AIS-EV-OBO
+    title: 'Delegated / on-behalf-of scoped tokens'
+    kind: evidence
+    requirements: ['9.5.2', '9.5.5']
+    pattern: 'on[_-]?behalf[_-]?of|token[_-]?exchange|grant-type:token-exchange|\bOBO\b|actor_token|may_act|requested_token_use|delegat\w*[_ ]token'
+
+  - id: AIS-EV-REAUTHZ
+    title: 'Continuous re-authorization during long sessions'
+    kind: evidence
+    requirements: ['9.5.6']
+    confidence: low
+    requires: [agent]
+    pattern: 're[-_ ]?authori[sz]e|revalidate[_ ]permission|check_permission[^\n]{0,60}(?:each|every)|per[-_ ]action[_ ]authori[sz]ation'
+
+  - id: AIS-EV-REVERSIBILITY
+    title: 'Action reversibility / impact classification'
+    kind: evidence
+    requirements: ['9.2.3', '9.2.4', '9.2.10']
+    requires: [agent, mcp_server]
+    pattern: 'readOnlyHint|destructiveHint|idempotentHint|openWorldHint|\birreversible\b|\breversible\b|risk[_ ]level|impact[_ ]level|\bside_effects?\b'
+
+  - id: AIS-EV-STATE-INTEGRITY
+    title: 'Agent state integrity protection'
+    kind: evidence
+    requirements: ['9.4.4']
+    confidence: low
+    requires: [agent]
+    pattern: '(?:state|checkpoint|memory)[^\n]{0,60}(?:hmac|signature|sha256|integrity|encrypt)|(?:hmac|signature|sha256)[^\n]{0,60}(?:state|checkpoint)|SecureSerializer|EncryptedSerializer'
+
+  - id: AIS-EV-TOOL-MANIFEST
+    title: 'Tool manifest declaring privileges / limits / validation'
+    kind: evidence
+    requirements: ['9.3.3', '9.3.4']
+    confidence: low
+    path_globs: ['*manifest*', '*tools*.y*ml', '*tools*.json', '*plugin*.json', '*skill*', '*tool*.y*ml', '*tool*.json', 'mcp.json', '.mcp.json']
+    pattern: '\bpermissions\b|required[_-]?privileges|resource[_-]?limits|\bcapabilit(?:y|ies)\b|\bscopes\b|output[_-]?(?:schema|validation)|\btimeout\b|rate[_-]?limit'
+
+  - id: AIS-EV-TOOL-QUOTA
+    title: 'Per-tool timeouts / resource quotas'
+    kind: evidence
+    requirements: ['9.1.1', '9.3.3']
+    requires: [agent, mcp_server]
+    pattern: '\btimeout\s*[=:]|max_execution_time|asyncio\.wait_for|AbortSignal\.timeout|request_timeout|execution_timeout|RLIMIT_|setrlimit|\bulimit\b|mem_limit|cpu_limit|pids_limit|cgroup|--memory\b|--cpus\b|resources:\s*\n\s*limits'
+
+  - id: AIS-EV-TOOL-SCHEMA
+    title: 'Tool input/output schema validation'
+    kind: evidence
+    requirements: ['9.3.2', '10.4.1', '10.4.4']
+    pattern: 'args_schema|inputSchema|input_schema|outputSchema|\bz\.object\b|\bzod\b|jsonschema|\bajv\b|\bTypedDict\b|pydantic|BaseModel|structuredContent|validateToolOutput|validate_tool|model_validate'
+
+  - id: AIS-EV-UNTRUSTED-ISOLATION
+    title: 'Architectural isolation of untrusted-data processing'
+    kind: evidence
+    requirements: ['9.3.5', '9.3.6']
+    pattern: 'quarantined[_ ]llm|dual[_ ]llm|\bCaMeL\b|plan[_-]then[_-]execute|planner[_ ]executor|privileged[_ ]llm|untrusted[_ ]processor|taint[_ ]tracking|information[_ ]flow|control[_ ]flow integrity|\bFIDES\b'

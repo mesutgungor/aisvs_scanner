@@ -1,0 +1,94 @@
+# OWASP AISVS Chapter C2: Input Validation & Prompt Injection Defenses
+# Declarative verification & evidence rules (12 rules)
+
+rules:
+  - id: AIS-PROMPT-001
+    title: 'Untrusted input concatenated into system/developer prompt'
+    kind: violation
+    requirements: ['2.1.6', '2.1.3']
+    severity: medium
+    langs: code
+    pattern: '(?:[\"'']role[\"'']\s*:\s*[\"''](?:system|developer)[\"'']\s*,\s*[\"'']content[\"'']\s*:\s*(?:f[\"''][^\"''\n]*\{[^}\n]*(?:user|request|query|input|question|message|body|prompt|req)\w*[^}\n]*\}|[\"''][^\"''\n]*[\"'']\s*(?:\+|%|\.format)|(?:user|request|query|input|question|req)\w*\s*[,}\n]))|(?:SystemMessage|system_prompt|system_message|SYSTEM_PROMPT|instructions)\s*(?:\(\s*(?:content\s*=\s*)?|=\s*)f[\"''][^\"''\n]*\{[^}\n]*(?:user|request|query|input|question|message|body|req)\w*[^}\n]*\}|role:\s*[\"''](?:system|developer)[\"'']\s*,\s*content:\s*`[^`]*\$\{[^}]*(?:user|req|input|query|message|body)'
+    message: 'User-controlled text is merged into the highest-privilege instruction channel, defeating instruction hierarchy'
+    remediation: 'Keep system/developer messages static; pass user content only as user-role messages, delimited/spotlighted and treated as untrusted.'
+
+  - id: AIS-PROMPT-002
+    title: 'Special-token injection allowed in tokenizer'
+    kind: violation
+    requirements: ['2.1.7']
+    severity: medium
+    confidence: low
+    langs: code
+    pattern: 'allowed_special\s*=\s*[\"'']all[\"'']|disallowed_special\s*=\s*\(\s*\)|split_special_tokens\s*=\s*False|parse_special\s*=\s*True'
+    message: 'User text containing reserved tokens (e.g. <|im_start|>) is parsed as control tokens'
+    remediation: 'Encode reserved tokens as literal text for untrusted input (tiktoken disallowed_special=''all'').'
+
+  - id: AIS-PROMPT-003
+    title: 'Input truncated instead of rejected'
+    kind: violation
+    requirements: ['2.1.4']
+    severity: low
+    confidence: low
+    langs: code
+    requires: [llm]
+    pattern: '\btruncation\s*=\s*True\b|\[\s*:\s*(?:MAX_\w+|max_\w+)\s*\]|truncate\s*=\s*[\"''](?:START|END)[\"'']'
+    message: 'Silent truncation of over-long prompts can cut off safety instructions or hide payloads'
+    remediation: 'Reject over-limit inputs with an explicit error before they reach the model.'
+
+  - id: AIS-EV-CHARSET
+    title: 'Character allow-list for inputs'
+    kind: evidence
+    requirements: ['2.1.5']
+    confidence: low
+    pattern: 'allowed[_ ]?chars|ALLOWED_CHARACTERS|char(?:acter)?[_ ]?allow(?:list|ed)|\.isprintable\(\)|string\.printable|unicodedata\.category|re\.(?:fullmatch|match)\(\s*r?[\"'']\^?\[[^\]]{3,}\]\+?\$?[\"'']'
+
+  - id: AIS-EV-CONTENT-CLASSIFY
+    title: 'Content classification / moderation (input and output)'
+    kind: evidence
+    requirements: ['2.2.1', '7.3.1', '2.2.2']
+    pattern: 'moderations\.create|omni-moderation|text-moderation|llama[-_ ]?guard|LlamaGuard|ShieldGemma|\bdetoxify\b|perspective[_ ]?api|commentanalyzer|ContentSafety|content_safety|safety_settings|HarmCategory|HarmBlockThreshold|guardrailIdentifier|guardrailConfig|ApplyGuardrail|OpenAIModerationChain|ModerationChain|nemoguardrails|sightengine|content[_ ]moderation|toxicity[_ ]classifier'
+
+  - id: AIS-EV-INPUT-LENGTH
+    title: 'Input length / token-budget enforcement'
+    kind: evidence
+    requirements: ['2.1.4']
+    pattern: '\btiktoken\b|count_tokens|num_tokens|get_num_tokens|token_count|max_input_(?:tokens|length|chars)|MAX_(?:INPUT|PROMPT)\w*|max_prompt\w*|context_window|context_length|maxLength\b|Field\([^)]*max_length|\bconstr\(|len\((?:prompt|user_input|message|text|query)\)\s*>|\.length\s*>\s*(?:MAX|\d{3,})'
+
+  - id: AIS-EV-INSTR-HIERARCHY
+    title: 'Instruction hierarchy / untrusted-content delimiting'
+    kind: evidence
+    requirements: ['2.1.6']
+    pattern: 'instruction[_ -]?hierarchy|[\"'']role[\"'']\s*:\s*[\"'']developer[\"'']|\buntrusted\b|spotlight|datamark|<user_input>|<untrusted|<document>|StruQ|SecAlign|trust[_ ]level|\bsandwich[_ ]defen[cs]e'
+
+  - id: AIS-EV-MANYSHOT
+    title: 'Many-shot jailbreak detection'
+    kind: evidence
+    requirements: ['2.1.8']
+    confidence: low
+    pattern: 'many[-_ ]?shot|shot[_ ]count|max_(?:examples|turns|messages)\b|conversation[_ ]length[_ ]limit'
+
+  - id: AIS-EV-MULTIMODAL-SCREEN
+    title: 'Screening of non-text inputs'
+    kind: evidence
+    requirements: ['2.2.3', '2.2.4']
+    confidence: low
+    requires: [multimodal]
+    pattern: 'steganograph|\bexiftool\b|strip_exif|adversarial[_ ]patch|image[_ ](?:sanitiz|scan|moderat)|ocr[_ ]injection|rekognition.*moderation|detect_moderation_labels|SafeSearch|safe_search|audio[_ ]moderation|vision[_ ]safety'
+
+  - id: AIS-EV-NORMALIZE
+    title: 'Unicode normalization / canonicalization of inputs'
+    kind: evidence
+    requirements: ['2.1.1', '2.1.2']
+    pattern: 'unicodedata\.normalize|\.normalize\(\s*[\"'']NF[KC]{1,2}[\"'']\s*\)|\bftfy\b|\bconfusables\b|\bunidecode\b|zero[-_ ]?width|homoglyph|strip_invisible|remove_invisible|invisible[_ ]char'
+
+  - id: AIS-EV-PI-DETECT
+    title: 'Prompt-injection / jailbreak detection'
+    kind: evidence
+    requirements: ['2.1.3', '12.2.1', '10.4.2']
+    pattern: '\brebuff\b|llm[_-]?guard|nemoguardrails|NeMo[\s-]Guardrails|guardrails[-_]ai|\blakera\b|promptguard|prompt[-_]guard|PromptShield|prompt_shield|\bvigil\b|\bprotectai\b|prompt-injection|prompt_injection|detect_injection|is_injection|injection_(?:score|detector|classifier)|llamafirewall|PromptArmor|ContentSafetyClient|azure-ai-contentsafety|\bpangea\b|aim[-_]guard|mcp[-_]scan|jailbreak[_ ]detect'
+
+  - id: AIS-EV-SPECIAL-TOKENS
+    title: 'Special-token handling for untrusted input'
+    kind: evidence
+    requirements: ['2.1.7']
+    pattern: 'disallowed_special\s*=\s*[\"'']all[\"'']|split_special_tokens\s*=\s*True|escape_special|strip_special|sanitize_special'

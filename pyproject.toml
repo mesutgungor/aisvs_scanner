@@ -39,4 +39,4 @@ aisvs-scan = "aisvs_scanner.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-aisvs_scanner = ["data/*.json"]
+aisvs_scanner = ["data/*.json", "data/rules/*.yaml"]

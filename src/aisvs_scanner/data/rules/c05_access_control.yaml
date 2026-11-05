@@ -1,0 +1,127 @@
+# OWASP AISVS Chapter C5: Access Control & Identity
+# Declarative verification & evidence rules (15 rules)
+
+rules:
+  - id: AIS-AUTHZ-001
+    title: 'Wildcard CORS on AI endpoint'
+    kind: violation
+    requirements: ['5.2.1']
+    severity: medium
+    langs: code
+    requires: [llm, agent, rag, serving]
+    pattern: 'allow_origins\s*=\s*\[\s*[\"'']\*[\"'']\s*\]|Access-Control-Allow-Origin[\"'']?\s*[:,]\s*[\"'']\*|\borigin:\s*[\"'']\*[\"'']|\bCORS\(\s*app\s*\)|\bcors\(\s*\)'
+    message: 'Any web origin can call the AI endpoint with the user''s ambient credentials'
+    remediation: 'Restrict CORS to explicit trusted origins; require authentication on every AI route.'
+
+  - id: AIS-RAG-001
+    title: 'Vector database client without authentication or TLS'
+    kind: violation
+    requirements: ['5.2.1', '8.1.3']
+    severity: medium
+    langs: code
+    callee: '\bchromadb\.(?:HttpClient|AsyncHttpClient)|\bQdrantClient|\bweaviate\.(?:connect_to_local|Client|connect_to_custom)|\bMilvusClient|\bconnections\.connect|\bnew\s+ChromaClient|\bnew\s+QdrantClient'
+    missing_any: 'api_key|apiKey|auth|token|headers|credentials|user\s*=|password|ssl|https|secure|:memory:|\bpath\s*=|location\s*='
+    max_hits_per_file: 3
+    message: 'Vector store connection has no credentials/TLS configured'
+    remediation: 'Enable authentication (API key/mTLS), TLS, and per-collection access control with default-deny.'
+
+  - id: AIS-RAG-002
+    title: 'Retrieval query without authorization / tenant scope filter'
+    kind: violation
+    requirements: ['5.2.2', '8.1.3', '8.1.1']
+    severity: medium
+    confidence: low
+    langs: code
+    requires: [rag]
+    callee: '\.(?:similarity_search(?:_with_score|_by_vector)?|as_retriever|query_points|vector_search|max_marginal_relevance_search|get_relevant_documents)\b'
+    missing_any: 'filter|where|namespace|tenant|metadata|search_kwargs|\bacl\b|user_id|owner|partition|scope|with_filter|query_filter|\bmust\b|kwargs'
+    max_hits_per_file: 3
+    message: 'Retrieval is executed with no visible user/tenant scope; any user may retrieve any indexed chunk'
+    remediation: 'Apply the end-user''s authorization context (metadata filter/namespace/ACL) at every retrieval and assembly stage.'
+
+  - id: AIS-RAG-003
+    title: 'Chroma/vector DB reset or anonymous access enabled'
+    kind: violation
+    requirements: ['5.2.1', '8.3.2']
+    severity: medium
+    pattern: 'allow_reset\s*[=:]\s*[\"'']?(?:true|True)|ALLOW_RESET\s*[=:]\s*[\"'']?(?:true|TRUE)|AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED\s*[=:]\s*[\"'']?(?:true|TRUE)|anonymous_access\s*[=:]\s*(?:true|True)'
+    message: 'Unauthenticated or destructive endpoints exposed on the vector store'
+    remediation: 'Disable anonymous access and remote reset; require auth for all operations.'
+
+  - id: AIS-SECRET-001
+    title: 'Hard-coded AI provider / vector-DB credential'
+    kind: violation
+    requirements: ['5.1.2', '9.4.3']
+    severity: high
+    pattern: '\bsk-(?:proj-|ant-api\d{2}-|svcacct-|or-v1-)?[A-Za-z0-9_\-]{32,}|\bAIza[0-9A-Za-z_\-]{35}\b|\bhf_[A-Za-z0-9]{30,}\b|\bgsk_[A-Za-z0-9]{40,}\b|\br8_[A-Za-z0-9]{30,}\b|\bpcsk_[A-Za-z0-9_]{40,}\b|\bxai-[A-Za-z0-9]{50,}\b|\bpplx-[A-Za-z0-9]{40,}\b|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{36,}\b|\blsv2_(?:pt|sk)_[A-Za-z0-9]{30,}|\bpk-lf-[0-9a-f-]{30,}|\bsk-lf-[0-9a-f-]{30,}'
+    unless_line: 'your[_-]?|xxxx|example|placeholder|<[^>]+>|\*{3}|dummy|changeme|redacted|fake|test[_-]?key|sk-\.\.\.|\.{3}'
+    case_sensitive: true
+    message: 'A long-lived secret is committed in source/config'
+    remediation: 'Revoke and rotate the key now; load secrets from a secret manager/env at runtime and use short-lived scoped tokens for agents.'
+
+  - id: AIS-EV-AUTH
+    title: 'Authentication / authorization on AI endpoints and resources'
+    kind: evidence
+    requirements: ['5.2.1']
+    pattern: 'HTTPBearer|OAuth2PasswordBearer|OAuth2AuthorizationCodeBearer|HTTPBasic|APIKeyHeader|APIKeyQuery|\bSecurity\(|Depends\(\s*(?:get_current_user|verify|authenticate|auth|require)\w*|login_required|jwt_required|@requires_auth|@authenticated|passport\.authenticate|express-jwt|expressjwt|jsonwebtoken|jwt\.(?:verify|decode)|next-auth|getServerSession|\bclerk\b|\bauth0\b|supabase\.auth|authMiddleware|requireAuth|verifyToken|@PreAuthorize|permission_classes|IsAuthenticated|\bRBAC\b|has_permission|permission_required|casbin|requires_role|require_scope'
+
+  - id: AIS-EV-CLASSIFICATION
+    title: 'Data classification labels propagated downstream'
+    kind: evidence
+    requirements: ['5.2.7']
+    confidence: low
+    pattern: 'classification[_ ]label|sensitivity[_ ]label|data[_ ]classification|propagat\w*[_ ]label|label[_ ]propagat|\bpurview\b|\bmacie\b'
+
+  - id: AIS-EV-JIT
+    title: 'Just-in-time privileged access'
+    kind: evidence
+    requirements: ['5.2.6']
+    confidence: low
+    pattern: 'just[_ -]in[_ -]time|jit[_ -]access|Privileged Identity Management|\bteleport\b|lease_duration|\bmax_ttl\b|DurationSeconds|break[_ -]?glass|\bCyberArk\b|\bStrongDM\b|time[_ -]bound|access[_ ]expir'
+
+  - id: AIS-EV-PDP
+    title: 'Externalized policy decision point'
+    kind: evidence
+    requirements: ['5.2.5', '9.5.3']
+    pattern: '\bOpenPolicyAgent\b|open-policy-agent|\.rego\b|\bcedar\b|\bcasbin\b|\bopenfga\b|\bcerbos\b|permit\.io|\bspicedb\b|\bauthzed\b|\bTopaz\b|verified_permissions|\bPolicyEngine\b|policy_decision'
+
+  - id: AIS-EV-POST-FILTER
+    title: 'Post-inference authorization / DLP filtering'
+    kind: evidence
+    requirements: ['5.2.4']
+    confidence: low
+    pattern: 'presidio|AnonymizerEngine|\bscrubadub\b|redact\w*\(|\bDLP\b|dlp_v2|mask_pii|detect_secrets|output[_ ]redact|authorize_response|filter_response|response_filter'
+
+  - id: AIS-EV-RETRIEVAL-AUTHZ
+    title: 'End-user authorization enforced on retrieval'
+    kind: evidence
+    requirements: ['5.2.2', '8.1.3']
+    requires: [rag]
+    pattern: '\btenant[_-]?id\b|namespace\s*=|query_filter|metadata_filter|search_kwargs\s*=\s*\{[^}]*filter|\bfilter\s*=\s*\{|\bwhere\s*=\s*\{|partition_key|\bacl\b|allowed_groups|row[_ -]level[_ -]security|\bwith_filter\b|user_id[^\n]{0,60}filter|filter[^\n]{0,60}user_id'
+
+  - id: AIS-EV-SHORTLIVED
+    title: 'Short-lived, scoped, signed tokens'
+    kind: evidence
+    requirements: ['5.1.2', '9.4.3']
+    pattern: 'short[_-]?lived|expires_in|AssumeRole|assume_role|get_session_token|client_credentials|\bPASETO\b|\bmacaroon\b|\bbiscuit\b|\bSVID\b|\bDPoP\b|token[_ ]ttl|ACCESS_TOKEN_EXPIRE_MINUTES|JWT_EXPIRATION|expiresIn|credential[_ ]rotation|rotate_secret|secrets[_ ]manager|SecretsManager|\bvault\b|cert-manager|renewBefore'
+
+  - id: AIS-EV-STEPUP
+    title: 'Step-up authentication for high-risk operations'
+    kind: evidence
+    requirements: ['5.1.1']
+    confidence: low
+    pattern: 'step[-_ ]?up|acr_values|\bmfa\b|\b2fa\b|\btotp\b|webauthn|fido2|re-?auth|require_mfa|conditional access'
+
+  - id: AIS-EV-TENANT
+    title: 'Multi-tenant isolation controls'
+    kind: evidence
+    requirements: ['5.3.1', '8.1.1']
+    confidence: low
+    pattern: '\btenant[_-]?id\b|X-Tenant|multi[_-]?tenan|per[_-]tenant|tenant[_ ]isolation|tenant-specific|row[_ ]level[_ ]security|set_config\([^)]*tenant'
+
+  - id: AIS-EV-TENANT-HW
+    title: 'Hardware/compute partitioning between tenants'
+    kind: evidence
+    requirements: ['5.3.2']
+    confidence: low
+    pattern: 'node[_-]?affinity|nodeSelector|dedicated[_ -]node|runtimeClassName|\btaints\b|\btolerations\b|dedicated[_ ]host|nvidia\.com/mig|hardware[_ ]partition'

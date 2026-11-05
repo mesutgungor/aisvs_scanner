@@ -18,6 +18,7 @@ from .reporters import (
     render_terminal,
 )
 from .rules import all_rules
+from .rules.yaml_loader import load_rules_from_path
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -43,6 +44,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     p_scan.add_argument("--catalog", help="Custom path to AISVS JSON catalog file")
     p_scan.add_argument("--rule", action="append", help="Filter by specific rule ID (can be repeated)")
     p_scan.add_argument("--ignore-rule", action="append", help="Ignore specific rule ID (can be repeated)")
+    p_scan.add_argument("-r", "--rules-path", action="append", default=[], help="Additional YAML rule file or directory (can be repeated)")
+    p_scan.add_argument("--no-builtin-rules", action="store_true", help="Disable built-in YAML rules and only run --rules-path rules")
 
     # 2. list-requirements command
     p_reqs = subparsers.add_parser("list-requirements", help="List all AISVS requirements from the official catalog")
@@ -51,10 +54,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     p_reqs.add_argument("--standard-version", choices=["1.01", "1.02-dev"], default=catalog.DEFAULT_VERSION)
 
     # 3. list-rules command
-    p_rules = subparsers.add_parser("list-rules", help="List all built-in security detection rules and evidence indicators")
+    p_rules = subparsers.add_parser("list-rules", help="List all built-in and custom YAML security detection rules")
     p_rules.add_argument("--kind", choices=["violation", "evidence", "all"], default="all")
+    p_rules.add_argument("-r", "--rules-path", action="append", default=[], help="Additional YAML rule file or directory (can be repeated)")
+    p_rules.add_argument("--no-builtin-rules", action="store_true", help="Only list rules from --rules-path")
 
-    # 4. sync command
+    # 4. validate-rules command
+    p_val = subparsers.add_parser("validate-rules", help="Validate one or more custom YAML rule files or directories")
+    p_val.add_argument("paths", nargs="+", help="YAML rule file(s) or directory path(s) to validate")
+
+    # 5. sync command
     p_sync = subparsers.add_parser("sync", help="Sync latest AISVS definitions from GitHub (OWASP/AISVS)")
     p_sync.add_argument("--standard-version", choices=["1.01", "1.02-dev"], default="1.01")
     p_sync.add_argument("--ref", default="main", help="Git branch or tag (default: main)")
@@ -71,6 +80,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         return cmd_list_requirements(args)
     elif args.command == "list-rules":
         return cmd_list_rules(args)
+    elif args.command == "validate-rules":
+        return cmd_validate_rules(args)
     elif args.command == "sync":
         return cmd_sync(args)
 
@@ -93,6 +104,8 @@ def cmd_scan(args) -> int:
         min_confidence=args.min_confidence,
         rules_filter=args.rule,
         ignored_rules=args.ignore_rule,
+        custom_rules=args.rules_path,
+        no_builtin_rules=args.no_builtin_rules,
         fail_on=Severity(args.fail_on) if args.fail_on else None,
     )
 
@@ -161,7 +174,10 @@ def cmd_list_requirements(args) -> int:
 
 
 def cmd_list_rules(args) -> int:
-    rules = all_rules()
+    rules = all_rules(
+        extra_paths=args.rules_path,
+        include_builtin=not args.no_builtin_rules,
+    )
     if args.kind != "all":
         rules = [r for r in rules if r.kind == args.kind]
 
@@ -175,6 +191,26 @@ def cmd_list_rules(args) -> int:
         sev = r.severity.value if r.kind == "violation" else "-"
         print(f"{r.id:<20} {r.kind:<10} {sev:<10} {reqs_str:<20} {r.title}")
     print()
+    return 0
+
+
+def cmd_validate_rules(args) -> int:
+    total = 0
+    for p_str in args.paths:
+        p = Path(p_str)
+        if not p.exists():
+            sys.stderr.write(f"Error: Rule path does not exist: {p}\n")
+            return 2
+        try:
+            loaded = load_rules_from_path(p)
+        except Exception as exc:
+            sys.stderr.write(f"Error validating {p}: {exc}\n")
+            return 1
+        violations = sum(1 for r in loaded if r.kind == "violation")
+        evidences = sum(1 for r in loaded if r.kind == "evidence")
+        print(f"✓ {p}: valid ({len(loaded)} rules: {violations} violation, {evidences} evidence)")
+        total += len(loaded)
+    print(f"\nValidated {total} total rule(s) successfully.")
     return 0
 
 

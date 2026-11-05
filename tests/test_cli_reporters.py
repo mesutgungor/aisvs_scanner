@@ -99,6 +99,12 @@ class TestCLI(unittest.TestCase):
             ret = main(["scan", tmpdir, "-l", "1", "-f", "json"])
             self.assertEqual(ret, 0)
 
+    def test_cli_validate_and_custom_rules(self):
+        ret = main(["validate-rules", "examples/custom_rules.yaml"])
+        self.assertEqual(ret, 0)
+        ret_list = main(["list-rules", "-r", "examples/custom_rules.yaml", "--no-builtin-rules"])
+        self.assertEqual(ret_list, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

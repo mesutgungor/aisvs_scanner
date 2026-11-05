@@ -1,0 +1,89 @@
+# OWASP AISVS Chapter C6: Supply Chain & AI BOM
+# Declarative verification & evidence rules (10 rules)
+
+rules:
+  - id: AIS-SUPPLY-001
+    title: 'Model/dataset download without revision pinning'
+    kind: violation
+    requirements: ['6.1.2', '6.1.3']
+    severity: low
+    confidence: low
+    langs: [notebook, python]
+    callee: '\b(?:\w+\.)?(?:from_pretrained|hf_hub_download|snapshot_download|load_dataset|SentenceTransformer|pipeline)\b'
+    missing_any: 'revision\s*=|commit_hash|local_files_only|cache_dir\s*=\s*[''\"]?/|\bos\.path|\bPath\('
+    unless_line: 'AutoTokenizer|local|\.\/|\"\.|''\.|tokenizer|^\s*def |\bclass '
+    max_hits_per_file: 3
+    message: 'Hub artifacts resolved by branch name are mutable; a compromised/updated upstream is silently pulled'
+    remediation: 'Pin `revision=<commit-sha>` for every third-party model/dataset and verify its hash.'
+
+  - id: AIS-SUPPLY-002
+    title: 'Model artifact fetched over plaintext HTTP'
+    kind: violation
+    requirements: ['6.1.2', '6.1.3']
+    severity: high
+    pattern: 'http://(?!localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|host\.docker\.internal)[^\s\"''<>]+\.(?:pt|pth|bin|safetensors|gguf|ggml|onnx|ckpt|pkl|pickle|h5|keras|tflite|joblib)\b'
+    message: 'Plaintext download of model weights is trivially tamperable'
+    remediation: 'Use HTTPS from an approved source and verify a pinned SHA-256 digest/signature.'
+
+  - id: AIS-SUPPLY-003
+    title: 'Model download without checksum/signature verification'
+    kind: violation
+    requirements: ['6.1.3', '3.1.3']
+    severity: medium
+    langs: [config, dockerfile, shell, text, yaml]
+    pattern: '\b(?:curl|wget)\b[^\n|;]*\.(?:pt|pth|bin|safetensors|gguf|ggml|onnx|ckpt|pkl|pickle|h5|keras|tflite|joblib)\b|\bADD\s+https?://\S+\.(?:pt|pth|bin|safetensors|gguf|ggml|onnx|ckpt|pkl|pickle|h5|keras|tflite|joblib)\b'
+    unless_file: 'sha256sum|shasum|sha512sum|--checksum|md5sum|cosign|sigstore|gpg\s+--verify|openssl\s+dgst|--hash'
+    message: 'Weights are downloaded with no integrity verification step in the same script'
+    remediation: 'Verify a pinned SHA-256 (or a Sigstore/GPG signature) immediately after download and fail the build on mismatch.'
+
+  - id: AIS-SUPPLY-004
+    title: 'Untrusted package index / trusted-host override'
+    kind: violation
+    requirements: ['6.1.2']
+    severity: medium
+    langs: [config, dockerfile, requirements, shell, text, toml, yaml]
+    pattern: '--trusted-host\b|--extra-index-url\b|--index-url\s+http://|pip\s+install[^\n]*\bgit\+http://'
+    message: 'Dependency confusion / MITM exposure for AI packages and models'
+    remediation: 'Use a single approved index over HTTPS with hash pinning (--require-hashes).'
+
+  - id: AIS-SUPPLY-005
+    title: 'Curl-pipe-shell installation'
+    kind: violation
+    requirements: ['6.1.2', '10.1.1']
+    severity: medium
+    langs: [config, dockerfile, shell, text, yaml]
+    pattern: '\b(?:curl|wget)\b[^\n]*\|\s*(?:sudo\s+)?(?:ba|z)?sh\b'
+    message: 'Remote script executed without verification'
+    remediation: 'Download, verify checksum/signature, then execute — or install from a pinned package.'
+
+  - id: AIS-EV-AIBOM
+    title: 'AI-BOM / ML-BOM tooling referenced'
+    kind: evidence
+    requirements: ['6.2.1']
+    pattern: '\bcyclonedx\b|\bML-?BOM\b|\bAI-?BOM\b|\baibom\b|machine-learning-model|\bSPDX[-\s]?3\b|\bmodel[_ ]card\b|\bmodelcard\b|\bcdx\.json\b'
+
+  - id: AIS-EV-BOMCHECK
+    title: 'AI-BOM completeness gate'
+    kind: evidence
+    requirements: ['6.2.3']
+    confidence: low
+    pattern: '(?:bom|aibom)[^\n]{0,80}(?:validate|complete|schema|fail)|cyclonedx[\w-]*\s+validate|--fail-on[-_]missing'
+
+  - id: AIS-EV-BOMSIGN
+    title: 'Signed AI-BOM / SBOM attestation'
+    kind: evidence
+    requirements: ['6.2.2']
+    pattern: 'cosign\s+(?:attest|sign-blob)|(?:sbom|bom)[^\n]{0,60}(?:sign|attest)|(?:sign|attest)[^\n]{0,60}(?:sbom|bom)\b|\bsyft\b[^\n]*attest|slsa-github-generator'
+
+  - id: AIS-EV-HASHVERIFY
+    title: 'Artifact hash/checksum verification'
+    kind: evidence
+    requirements: ['6.1.3', '1.1.3', '3.1.3', '3.5.1', '3.5.3', '4.3.2']
+    confidence: low
+    pattern: 'hashlib\.(?:sha256|sha512|sha3_256|blake2b)|sha256sum|sha512sum|shasum\s+-a|--checksum\b|expected[_ ]?(?:hash|sha256|checksum|digest)|verify[_ ]?(?:hash|checksum|digest|integrity)|--hash=sha(?:256|512)|\bdvc\.lock\b|revision\s*=\s*[\"''][0-9a-f]{40}[\"'']|createHash\([\"'']sha(?:256|512)[\"'']\)|sha256\s*[:=]\s*[\"''][0-9a-f]{64}'
+
+  - id: AIS-EV-MODELSCAN
+    title: 'Model scanner for malicious code'
+    kind: evidence
+    requirements: ['6.1.1']
+    pattern: '\b(?:modelscan|picklescan|fickling|protectai|model-scan|modelaudit|guardian-scan|hidden-layer|hiddenlayer|jfrog.*xray.*model)\b'

@@ -199,6 +199,15 @@ Performs a security verification audit of a target directory, file, or repositor
 | `--standard-version` | Choice | `1.01` | AISVS catalog version (`1.01` or `1.02-dev`). |
 | `--rule` | Rule ID | None | Run only specific rule IDs (can be repeated). |
 | `--ignore-rule` | Rule ID | None | Ignore specific rule IDs (can be repeated). |
+| `-r`, `--rules-path` | Path | None | Load additional YAML rule file(s) or directory (can be repeated). |
+| `--no-builtin-rules` | Flag | `False` | Disable built-in YAML rules and only run `--rules-path` rules. |
+
+### `aisvs-scan validate-rules <PATH...>`
+Validate one or more custom YAML rule files or directories before running a scan:
+
+```bash
+aisvs-scan validate-rules examples/custom_rules.yaml
+```
 
 ### `aisvs-scan list-requirements [OPTIONS]`
 Browse the official AISVS requirements catalog.
@@ -338,6 +347,46 @@ Verification Summary:
    FastAPI MCP server bound to all interfaces without Origin/Host verification middleware, exposing it to local DNS rebinding attacks.
 
 *(An interactive HTML report of this benchmark is included in `examples/reports/gpt_researcher_audit_report.html`)*.
+
+---
+
+## Declarative YAML Rule Engine & Custom Rules
+
+All 175+ built-in OWASP AISVS detection rules and defense evidence indicators are decoupled from Python code into per-chapter YAML rule packs under [`src/aisvs_scanner/data/rules/`](src/aisvs_scanner/data/rules/) (`c01_training_data.yaml` through `c12_monitoring_logging.yaml`).
+
+- **Zero External Dependencies**: Uses a built-in pure-Python YAML parser out of the box (automatically accelerating with `PyYAML` if installed).
+- **Custom Rules & Overrides**: Supply `-r / --rules-path <file_or_dir>` to add organization-specific rules or override any built-in rule by `id`.
+
+```yaml
+# examples/custom_rules.yaml
+rules:
+  - id: CUSTOM-LLM-001
+    kind: violation
+    reqs: ["5.3.1", "2.1.1"]
+    title: "Direct unapproved LLM endpoint domain in source code"
+    severity: high
+    confidence: high
+    langs: [code, config_only]
+    patterns:
+      - 'https?://api\.unapproved-llm-vendor\.example\.com'
+    remediation: "Route all LLM inference calls through the approved enterprise AI gateway."
+
+  - id: CUSTOM-GUARD-001
+    kind: evidence
+    reqs: ["2.1.1", "7.1.1"]
+    title: "Enterprise AI Gateway SDK Guardrail Initialized"
+    langs: [python, js]
+    patterns:
+      - 'EnterpriseAIGateway\s*\('
+```
+
+```bash
+# Validate custom YAML rules
+aisvs-scan validate-rules examples/custom_rules.yaml
+
+# Scan a repository with built-in + custom YAML rules
+aisvs-scan scan . -r examples/custom_rules.yaml
+```
 
 ---
 
