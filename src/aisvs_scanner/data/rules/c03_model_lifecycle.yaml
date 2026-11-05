@@ -1,0 +1,81 @@
+# OWASP AISVS Chapter C3: Model Lifecycle Management & Change Control
+# Declarative verification & evidence rules (11 rules)
+
+rules:
+  - id: AIS-SUPPLY-006
+    title: 'Unpinned moving model alias'
+    kind: violation
+    requirements: ['3.2.3']
+    severity: low
+    confidence: low
+    langs: [code, config, json, toml, yaml]
+    pattern: '\bmodel(?:_name|_id|Id)?\s*[=:]\s*[\"''](?:gpt-4o|gpt-4|gpt-4-turbo|gpt-4\.1(?:-mini)?|gpt-5(?:-mini)?|gpt-3\.5-turbo|chatgpt-4o-latest|o1|o3|o3-mini|o4-mini|[\w.:/-]*-latest|[\w.:/-]*:latest|gemini-[\w.]+-(?:pro|flash)|claude-(?:3|3-5|3-7)-[\w-]+)[\"'']'
+    max_hits_per_file: 3
+    message: 'A floating model alias lets the provider change behaviour without triggering security re-evaluation'
+    remediation: 'Pin dated/versioned model identifiers and gate alias bumps behind your evaluation suite.'
+
+  - id: AIS-EV-CHECKPOINT-REG
+    title: 'Checkpoints registered as artifacts'
+    kind: evidence
+    requirements: ['3.5.4']
+    confidence: low
+    pattern: 'log_artifact\([^)]*checkpoint|register[^\n]{0,40}checkpoint|checkpoint[^\n]{0,40}(?:register|artifact)|save_total_limit|push_to_hub_strategy|hub_strategy'
+
+  - id: AIS-EV-EVAL-CI
+    title: 'Safety evaluation wired into CI/CD'
+    kind: evidence
+    requirements: ['3.2.1', '6.1.4', '11.1.2', '11.1.5']
+    path_globs: ['.github/workflows/*', '.gitlab-ci.yml', Jenkinsfile, 'azure-pipelines.yml', '.circleci/config.yml', 'bitbucket-pipelines.yml', '*.gitlab-ci.yml', 'cloudbuild.yaml', 'buildspec.yml']
+    pattern: 'promptfoo|garak|deepeval|ragas|inspect[_ ]eval|lm[-_]eval|pyrit|giskard|harmbench|safety[_-]eval|alignment[_-]test|redteam|red_team|eval_suite|pytest[^\n]*(?:safety|eval|redteam)'
+
+  - id: AIS-EV-EVALTOOL
+    title: 'Automated model safety/security evaluation tooling'
+    kind: evidence
+    requirements: ['3.2.1', '3.2.2', '6.1.4', '11.1.2', '11.1.3']
+    pattern: '\bpromptfoo\b|\bgarak\b|\bdeepeval\b|\bragas\b|\binspect_ai\b|\blm[-_]eval\b|\blm_eval\b|\blighteval\b|openai/evals|\bpyrit\b|\bgiskard\b|\btrulens\b|\bharmbench\b|safety[_-]eval|alignment[_-]test|\bredteam\b|red_team|eval_suite|test_safety|\btoxigen\b|realtoxicityprompts|truthfulqa|do-not-answer|\bagentdojo\b|\bdeepteam\b|jailbreakbench|\bdecodingtrust\b|\bhelm\b.*(?:eval|benchmark)'
+
+  - id: AIS-EV-MODELPIN
+    title: 'Dated/versioned model identifiers'
+    kind: evidence
+    requirements: ['3.2.3']
+    confidence: low
+    pattern: '\b(?:gpt-[\w.]+|claude-[\w.-]+|gemini-[\w.-]+|mistral-[\w.-]+)-(?:\d{4}-\d{2}-\d{2}|\d{8}|\d{3})\b'
+
+  - id: AIS-EV-REGISTRY
+    title: 'Model registry / versioned artifact store'
+    kind: evidence
+    requirements: ['3.1.1']
+    pattern: '\bmlflow\b|\bModelRegistry\b|model[_ -]registry|register_model|registered_model|wandb\.(?:log_artifact|Artifact)|ModelPackageGroup|\baiplatform\.Model\b|vertexai\.[\w.]*Model\.upload|ml_client\.models|push_to_hub|\bbentoml\.(?:models|\w+\.save_model)|\bclearml\b|\bkserve\b|\bseldon\b|Unity Catalog|\bneptune\b|\bcomet_ml\b|\bdvc\b'
+
+  - id: AIS-EV-REWARDHACK
+    title: 'Reward-hacking / reward over-optimization controls'
+    kind: evidence
+    requirements: ['3.5.2']
+    confidence: low
+    pattern: 'reward[_ ]hacking|over-?optimi[sz]ation|kl_coef|init_kl_coef|target_kl|kl_penalty|adaptive_kl|gold_reward'
+
+  - id: AIS-EV-ROLLBACK
+    title: 'Full-state rollback mechanism'
+    kind: evidence
+    requirements: ['3.3.2']
+    confidence: low
+    pattern: 'kubectl\s+rollout\s+undo|helm\s+rollback|rollbackOnFailure|AutoRollbackConfiguration|rollback_configuration|rollback[_ ]to[_ ]version|restore[_ ]model[_ ]state|model[_ ]rollback|revisionHistoryLimit'
+
+  - id: AIS-EV-ROLLOUT
+    title: 'Progressive rollout / automated rollback'
+    kind: evidence
+    requirements: ['3.3.1']
+    pattern: 'kind:\s*Rollout|argoproj\.io|\bflagger\b|\bcanary\b|RollingUpdate|blue[-_ ]green|progressive[_ ]delivery|AnalysisTemplate|automatedRollback|auto[_-]?rollback|rollbackOnFailure|rollback[_-]on[_-]failure|helm[^\n]*--atomic|AutoRollbackConfiguration|deployment_circuit_breaker|rollback_configuration|canaryTrafficPercent|BlueGreenUpdatePolicy|traffic_split|TrafficSplit'
+
+  - id: AIS-EV-SIGNING
+    title: 'Cryptographic signing/verification of artifacts'
+    kind: evidence
+    requirements: ['3.1.2', '3.1.3', '4.3.2']
+    pattern: '\bcosign\b|\bsigstore\b|model[_-]signing|\brekor\b|\bin-toto\b|\bslsa\b|\bminisign\b|gpg\s+--(?:verify|detach-sign)|\bnotation\s+(?:sign|verify)\b|openssl\s+dgst\s+-sign|\bapksigner\b|\bcodesign\b'
+
+  - id: AIS-EV-TRAIN-ISOLATION
+    title: 'Separate training/production environments'
+    kind: evidence
+    requirements: ['3.4.2', '3.4.1']
+    confidence: low
+    pattern: 'namespace:\s*(?:training|ml-training|finetun\w*|train)|environment[_ ]separation|separate[_ ](?:vpc|account|project)\s+for\s+train'

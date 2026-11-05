@@ -1,0 +1,40 @@
+# OWASP AISVS Chapter C8: Memory, Embeddings & Vector Database
+# Declarative verification & evidence rules (5 rules)
+
+rules:
+  - id: AIS-EV-EMBED-REDACT
+    title: 'PII/secret detection before embedding'
+    kind: evidence
+    requirements: ['8.2.1', '1.2.3']
+    requires: [rag, training]
+    pattern: 'presidio|AnalyzerEngine|AnonymizerEngine|\bscrubadub\b|\bpiiranha\b|mask_pii|detect_secrets|trufflehog|gitleaks|pii[_ ]?(?:filter|detect|redact|scrub)|redact\w*\(|anonymi[sz]e\w*\(|comprehend[\s\S]{0,60}pii|dlp_v2|tokeniz\w*_pii'
+
+  - id: AIS-EV-MEM-EXPIRY
+    title: 'Memory/vector expiry (TTL)'
+    kind: evidence
+    requirements: ['8.3.1']
+    requires: [rag, agent]
+    pattern: '\bttl\b|expires?_at|\bexpiry\b|time_to_live|valid_until|expire_after|\bexpires?\b\s*[=:]'
+
+  - id: AIS-EV-MEM-RESET
+    title: 'Memory reset / deletion capability'
+    kind: evidence
+    requirements: ['8.3.2', '8.3.3']
+    requires: [rag, agent]
+    pattern: 'delete_collection|\.reset\(\)|clear_memory|reset_memory|\bforget\b|\bpurge\b|\.delete\(\s*(?:ids|where|filter)|memory\.clear\(|delete_index|\bquarantine\b'
+
+  - id: AIS-EV-MEM-WRITE-VALIDATION
+    title: 'Validated writes to trusted agent memory'
+    kind: evidence
+    requirements: ['8.2.3']
+    confidence: low
+    requires: [rag, agent]
+    pattern: 'validate[_ ]memory|memory[_ ]write[_ ]policy|trusted[_ ]memory|source[_ ]validation|provenance[_ ]check|untrusted[_ ]memory'
+
+  - id: AIS-EV-VECTOR-ANOMALY
+    title: 'Vector/content anomaly detection & quarantine before indexing'
+    kind: evidence
+    requirements: ['8.2.2', '8.2.4', '8.2.5']
+    confidence: low
+    requires: [rag]
+    pattern: 'IsolationForest|LocalOutlierFactor|\bpyod\b|outlier|\bquarantine\b|retrieval[_ ]poison|rag[_ ]poison|poison\w*[_ ]detect|contradiction[_ ]detect|conflict[_ ]detect'

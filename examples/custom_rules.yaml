@@ -1,0 +1,30 @@
+# Example custom OWASP AISVS YAML rule pack
+# Usage:
+#   aisvs-scan validate-rules examples/custom_rules.yaml
+#   aisvs-scan scan . -r examples/custom_rules.yaml
+
+rules:
+  - id: CUSTOM-LLM-001
+    kind: violation
+    reqs: ["5.3.1", "2.1.1"]
+    title: "Direct unapproved LLM endpoint domain in source code"
+    severity: high
+    confidence: high
+    cwe: CWE-829
+    langs:
+      - code
+      - config_only
+    patterns:
+      - 'https?://api\.unapproved-llm-vendor\.example\.com'
+    remediation: "Route all LLM inference calls through the approved enterprise AI gateway."
+
+  - id: CUSTOM-GUARD-001
+    kind: evidence
+    reqs: ["2.1.1", "7.1.1"]
+    title: "Enterprise AI Gateway SDK Guardrail Initialized"
+    langs:
+      - python
+      - js
+    patterns:
+      - 'EnterpriseAIGateway\s*\('
+      - 'enable_enterprise_guardrails\s*\(\s*True\s*\)'

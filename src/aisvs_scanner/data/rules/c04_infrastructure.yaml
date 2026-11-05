@@ -1,0 +1,118 @@
+# OWASP AISVS Chapter C4: Infrastructure & Workload Sandboxing
+# Declarative verification & evidence rules (14 rules)
+
+rules:
+  - id: AIS-DESER-001
+    title: 'Unsafe pickle-based deserialization of model/data artifact'
+    kind: violation
+    requirements: ['4.1.2', '6.1.1']
+    severity: high
+    langs: [notebook, python]
+    callee: '\b(?:pickle|cPickle|_pickle|dill|cloudpickle)\.loads?\b|\bjoblib\.load\b|\bpd\.read_pickle\b|\bpandas\.read_pickle\b|\bshelve\.open\b'
+    forbid: '[\s\S]'
+    message: 'Pickle-family deserialization can execute arbitrary code embedded in the artifact'
+    remediation: 'Use a non-executable format (safetensors, ONNX, GGUF) or verify provenance + scan the artifact before loading; never unpickle untrusted data.'
+
+  - id: AIS-DESER-002
+    title: 'torch.load without weights_only=True'
+    kind: violation
+    requirements: ['4.1.2', '6.1.1']
+    severity: high
+    langs: [notebook, python]
+    callee: '\btorch\.load\b'
+    missing_any: 'weights_only\s*=\s*True'
+    message: 'torch.load unpickles by default and can execute attacker-controlled code'
+    remediation: 'Pass weights_only=True (or load .safetensors) and restrict the allow-listed globals.'
+
+  - id: AIS-DESER-003
+    title: 'trust_remote_code=True executes code shipped with a model'
+    kind: violation
+    requirements: ['4.1.2', '6.1.1', '6.1.2']
+    severity: high
+    pattern: 'trust_remote_code\s*[=:]\s*(?:True|true)'
+    message: 'Model repositories can ship arbitrary Python executed on load'
+    remediation: 'Set trust_remote_code=False, or pin a reviewed commit SHA (revision=...) from an approved source.'
+
+  - id: AIS-DESER-004
+    title: 'numpy.load with allow_pickle=True'
+    kind: violation
+    requirements: ['4.1.2']
+    severity: high
+    langs: [notebook, python]
+    pattern: 'allow_pickle\s*=\s*True'
+    message: 'allow_pickle=True re-enables arbitrary code execution through np.load'
+    remediation: 'Leave allow_pickle=False and store arrays in .npy/.npz/safetensors.'
+
+  - id: AIS-DESER-005
+    title: 'Keras safe_mode disabled / unsafe deserialization enabled'
+    kind: violation
+    requirements: ['4.1.2', '6.1.1']
+    severity: high
+    pattern: 'safe_mode\s*=\s*False|enable_unsafe_deserialization\s*\(|allow_dangerous_deserialization\s*=\s*True'
+    message: 'Disabling Keras safe mode allows Lambda-layer code execution during model load'
+    remediation: 'Keep safe_mode=True and avoid Lambda layers in distributed models.'
+
+  - id: AIS-DESER-006
+    title: 'Unsafe YAML/marshal loading'
+    kind: violation
+    requirements: ['4.1.2']
+    severity: medium
+    confidence: low
+    langs: [notebook, python]
+    callee: '\byaml\.(?:load|unsafe_load|full_load)\b|\bmarshal\.loads?\b'
+    missing_any: 'SafeLoader|CSafeLoader|BaseLoader'
+    unless_line: safe_load
+    message: 'Non-safe YAML/marshal loaders can instantiate arbitrary objects'
+    remediation: 'Use yaml.safe_load for model/config files.'
+
+  - id: AIS-EV-ATTEST
+    title: 'Workload / GPU attestation'
+    kind: evidence
+    requirements: ['4.1.3', '4.2.3']
+    pattern: '\bnvtrust\b|\bNRAS\b|nvidia[_-]attestation|gpu[_ ]attestation|Azure Attestation|remote[_ ]attestation|workload[_ ]attestation|\bSEV-SNP\b|Intel\s+TDX|confidential[_ -]?containers'
+
+  - id: AIS-EV-CONFIDENTIAL
+    title: 'Confidential computing / TEE'
+    kind: evidence
+    requirements: ['4.1.4', '4.2.2']
+    pattern: 'confidential[_ -]?(?:computing|vm|containers|gpu|inference|space)|Trusted Execution|\bSGX\b|\bgramine\b|\boclum\b|nitro[_ -]enclaves?|\benclave\b|ConfidentialVM|\bTDX\b|\bSEV-SNP\b|\bnvtrust\b'
+
+  - id: AIS-EV-EDGE-AUTH
+    title: 'Edge device strong authentication'
+    kind: evidence
+    requirements: ['4.3.1']
+    requires: [edge]
+    pattern: '\bmTLS\b|mutual[_ ]tls|client[_ ]cert|device[_ ]cert|X\.509|AWS IoT|IoT Core|Azure IoT|device[_ ]attestation|\bTPM\b|\bSPIFFE\b|secure[_ ]element|device[_ ]identity'
+
+  - id: AIS-EV-EDGE-CRYPTO
+    title: 'Hardware-backed key store / secure enclave for on-device models'
+    kind: evidence
+    requirements: ['4.3.4', '4.3.5']
+    requires: [edge]
+    pattern: 'AndroidKeyStore|\bKeychain\b|SecureEnclave|kSecAttrTokenIDSecureEnclave|EncryptedFile|SQLCipher|StrongBox|Secure Enclave|CryptoKit|AES\.GCM|ChaChaPoly|EncryptedSharedPreferences|android\.security\.keystore|TrustZone|OP-TEE'
+
+  - id: AIS-EV-EDGE-ISOLATION
+    title: 'On-device runtime isolation'
+    kind: evidence
+    requirements: ['4.3.3']
+    confidence: low
+    requires: [edge]
+    pattern: '\bseccomp\b|AppSandbox|com\.apple\.security\.app-sandbox|isolatedProcess|\bSELinux\b|\bAppArmor\b|hardened[_ ]runtime'
+
+  - id: AIS-EV-GPU-ISOLATION
+    title: 'GPU partitioning / memory isolation'
+    kind: evidence
+    requirements: ['4.2.4']
+    pattern: 'nvidia\.com/mig|mig-parted|MIG[_ ]?(?:enabled|profile|strategy)|nvidia-smi\s+mig|mig\.strategy|nvidia-cuda-mps|--mig\b'
+
+  - id: AIS-EV-SAFEFORMAT
+    title: 'Safe serialization format / allow-list enforced'
+    kind: evidence
+    requirements: ['4.1.2']
+    pattern: 'weights_only\s*=\s*True|use_safetensors\s*=\s*True|\bsafetensors\b|trust_remote_code\s*=\s*False|ALLOWED_(?:MODEL_)?(?:EXTENSIONS|FORMATS|SUFFIXES)|allowed_(?:model_)?(?:extensions|formats|suffixes)|\.gguf\b'
+
+  - id: AIS-EV-SANDBOX
+    title: 'Sandbox / isolation technology for AI workloads'
+    kind: evidence
+    requirements: ['4.1.1', '9.3.1', '10.1.3']
+    pattern: '\b(?:e2b|gvisor|runsc|firecracker|kata-containers|nsjail|firejail|bubblewrap|bwrap|seccomp|landlock|RestrictedPython|pyodide|wasmtime|wasmer|isolated-vm|DockerCommandLineCodeExecutor|apparmor|runtimeClassName|daytona|modal\.Sandbox|CodeInterpreterSandbox|SandboxedEnvironment|vm2)\b|\bsecurityContext\b|--cap-drop|--read-only|no-new-privileges'

@@ -1,0 +1,134 @@
+# OWASP AISVS Chapter C12: Monitoring & Logging
+# Declarative verification & evidence rules (18 rules)
+
+rules:
+  - id: AIS-EV-ALERTING
+    title: 'Alerting / SIEM integration'
+    kind: evidence
+    requirements: ['12.2.1', '12.2.3']
+    confidence: low
+    pattern: 'sentry_sdk|\bpagerduty\b|\bopsgenie\b|alertmanager|send_alert|raise_alert|notify_security|\bsiem\b|\bsplunk\b|\bwazuh\b|\bfalco\b|PutMetricAlarm|\bsigma\b|\byara\b|detection[_-]?rules?'
+
+  - id: AIS-EV-AUDIT-PROACTIVE
+    title: 'Audit logs for security-critical actions (approver, timestamp, params, outcome)'
+    kind: evidence
+    requirements: ['12.4.2']
+    confidence: low
+    requires: [agent]
+    pattern: 'audit[_ ]log\w*[^\n]{0,120}(?:approver|approved_by)|(?:approver|approved_by)[^\n]{0,120}audit|audit_trail'
+
+  - id: AIS-EV-BEHAVIOR-ANOMALY
+    title: 'Behavioral anomaly detection on conversations'
+    kind: evidence
+    requirements: ['12.2.2']
+    confidence: low
+    pattern: 'excessive[_ ]retr(?:y|ies)|probing|behavio(?:u)?ral[_ ]anomal|retry[_ ]count|conversation[_ ]anomal|session[_ ]anomal'
+
+  - id: AIS-EV-C2-MONITOR
+    title: 'LLM API covert-channel / C2 traffic monitoring'
+    kind: evidence
+    requirements: ['12.2.6']
+    confidence: low
+    pattern: 'covert[_ -]channel|\bC2\b[^\n]{0,30}(?:detect|monitor)|egress[_ ]monitor|llm[_ ]gateway|ai[_ ]gateway|api[_ ]gateway[^\n]{0,40}llm'
+
+  - id: AIS-EV-DOC-TAG
+    title: 'Documents tagged at write time (source, writer, timestamp)'
+    kind: evidence
+    requirements: ['12.5.4', '8.1.2']
+    requires: [rag]
+    pattern: 'metadata\s*=\s*\{[^}]{0,300}(?:source|author|owner|writer|created_by|uploaded_by)[^}]{0,300}(?:timestamp|created_at|ingested_at|date|time)|metadata\s*=\s*\{[^}]{0,300}(?:timestamp|created_at|ingested_at)[^}]{0,300}(?:source|author|owner|writer|created_by|uploaded_by)'
+
+  - id: AIS-EV-DRIFT
+    title: 'Data/model drift detection'
+    kind: evidence
+    requirements: ['12.3.1', '12.3.4']
+    requires: [llm, model_loading, training]
+    pattern: '\bevidently\b|alibi[_-]?detect|\bnannyml\b|\bwhylogs\b|ks_2samp|kolmogorov|population[_ ]stability|\bPSI\b|(?:data|concept|embedding)[_ ]drift|drift[_ ]detect|DataDriftPreset|\bKSDrift|\bMMDDrift|river\.drift|\bADWIN\b|\bfiddler\b|\baporia\b|\bdeepchecks\b'
+
+  - id: AIS-EV-GENAI-SCHEMA
+    title: 'Structured GenAI telemetry schema (OTel gen_ai)'
+    kind: evidence
+    requirements: ['12.1.3', '12.1.1']
+    requires: [llm]
+    pattern: 'gen_ai\.(?:request\.model|usage\.input_tokens|usage\.output_tokens|system|provider\.name|operation\.name)|GenAIAttributes|SpanAttributes\.LLM_|openinference\.semconv|llm\.token_count|OTEL_SEMCONV_STABILITY_OPT_IN|opentelemetry-instrumentation-(?:openai|anthropic|langchain|bedrock|vertexai)|\b(?:OpenAI|Anthropic|LangChain)Instrumentor'
+
+  - id: AIS-EV-HALLUCINATION
+    title: 'Hallucination detection / groundedness evaluation'
+    kind: evidence
+    requirements: ['12.3.2', '7.2.1']
+    requires: [llm]
+    pattern: 'selfcheckgpt|hallucination[_ ]?(?:detect|score|rate|metric|guard)|HallucinationMetric|\bHHEM\b|groundedness|faithfulness|\btrulens\b|\bragas\b|answer[_ ]relevancy|context[_ ]precision'
+
+  - id: AIS-EV-HALLUCINATION-METRIC
+    title: 'Hallucination rate tracked as time series'
+    kind: evidence
+    requirements: ['12.3.3']
+    requires: [llm]
+    pattern: '(?:Gauge|Histogram|Counter|Summary)\([^)]*halluc|halluc\w*[_ ]rate|hallucination_rate'
+
+  - id: AIS-EV-IMMUTABLE-AUDIT
+    title: 'Immutable audit records for model changes'
+    kind: evidence
+    requirements: ['12.5.3']
+    confidence: low
+    pattern: 'object[_ ]lock|ObjectLock|\bWORM\b|append[_-]only|\bimmudb\b|\brekor\b|\bledger\b|\bQLDB\b|retention_mode|CloudTrail|immutable[_ ]log'
+
+  - id: AIS-EV-KILLSWITCH-LOG
+    title: 'Kill-switch/override activations logged'
+    kind: evidence
+    requirements: ['12.4.3']
+    confidence: low
+    pattern: 'kill[_-]?switch[^\n]{0,80}\blog\w*|\blog\w*[^\n]{0,80}kill[_-]?switch|override[^\n]{0,60}audit'
+
+  - id: AIS-EV-LABEL-AUDIT
+    title: 'Labeling activity audit logging'
+    kind: evidence
+    requirements: ['12.5.2']
+    confidence: low
+    requires: [training]
+    pattern: 'label[_ ]?(?:audit|log|history)|annotation[_ ]?(?:audit|log|history)|annotator[_ ]activity'
+
+  - id: AIS-EV-LINEAGE
+    title: 'Dataset lineage / provenance tracking'
+    kind: evidence
+    requirements: ['12.5.1', '1.1.2']
+    requires: [training]
+    pattern: '\bopenlineage\b|\bmarquez\b|\blineage\b|\bprovenance\b|mlflow\.log_input|mlflow\.data|\bdvc\.(?:yaml|lock)\b|\blakefs\b|\bpachyderm\b|\bprov-o\b'
+
+  - id: AIS-EV-OBSERVABILITY
+    title: 'AI interaction logging / tracing'
+    kind: evidence
+    requirements: ['12.1.1']
+    requires: [llm]
+    pattern: '\blangfuse\b|\blangsmith\b|LANGCHAIN_TRACING|\bopentelemetry\b|\bopenllmetry\b|\btraceloop\b|\barize\b|phoenix\.otel|\bopeninference\b|\bhelicone\b|mlflow\.(?:tracing|openai|langchain)|weave\.init|\bbraintrust\b|\blunary\b|\bportkey\b|LLMObs|\bpromptlayer\b|\bhoneyhive\b|\blogfire\b|\bagentops\b|\bliteralai\b|\bopik\b|logger\.\w+\([^)]*(?:prompt|completion|messages|response)'
+
+  - id: AIS-EV-PROACTIVE-ANALYSIS
+    title: 'Security evaluation on autonomous action triggers'
+    kind: evidence
+    requirements: ['12.4.1']
+    confidence: low
+    requires: [agent]
+    pattern: 'threat[_ ]landscape|proactive[_ ]security|behavior[_ ]pattern[_ ]analysis|pre[_-]?action[_ ]check|security[_ ]evaluation[^\n]{0,40}trigger'
+
+  - id: AIS-EV-RAG-LOG
+    title: 'Retrieval events logged'
+    kind: evidence
+    requirements: ['12.1.4']
+    confidence: low
+    requires: [rag]
+    pattern: 'on_retriever_end|on_retriever_start|retriever[_ ]span|log\w*\.\w+\([^)]*(?:retriev|documents|sources|chunks|doc_ids)|span_kind[^\n]{0,20}RETRIEVER|\blangfuse\b|LangfuseCallback|\btraceloop\b|\bopeninference\b'
+
+  - id: AIS-EV-SAFETY-LOG
+    title: 'Safety/policy decisions logged'
+    kind: evidence
+    requirements: ['12.1.2']
+    confidence: low
+    requires: [llm]
+    pattern: 'log\w*\.\w+\([^)]*(?:moderation|flagged|blocked|policy|guardrail|safety|violation|categories|injection)'
+
+  - id: AIS-EV-TOKEN-USAGE
+    title: 'Granular token-usage attribution'
+    kind: evidence
+    requirements: ['12.2.5']
+    requires: [llm]
+    pattern: 'usage\.(?:total_tokens|prompt_tokens|completion_tokens|input_tokens|output_tokens)|token_usage|usage_metadata|get_openai_callback|cost_tracking|track_usage|UsageLimits|litellm\.completion_cost|tokens_used|response_metadata|\bopenmeter\b|\blago\b|virtual_keys?|team_budget|per[-_]user[-_](?:quota|budget)'

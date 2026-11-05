@@ -1,0 +1,108 @@
+# OWASP AISVS Chapter C11: Adversarial Robustness
+# Declarative verification & evidence rules (15 rules)
+
+rules:
+  - id: AIS-OUTPUT-005
+    title: 'Sampling parameters taken directly from the caller'
+    kind: violation
+    requirements: ['11.3.5']
+    severity: medium
+    langs: code
+    callee: '\b(?:\w+\.)*(?:chat\.completions\.create|completions\.create|responses\.create|generate_content(?:_async)?|ChatOpenAI|AzureChatOpenAI|ChatOllama|ChatGoogleGenerativeAI|ChatMistralAI|ChatGroq|messages\.create|messages\.stream|litellm\.a?completion|ollama\.(?:chat|generate)|\.invoke_model|\.converse)\b'
+    forbid: '\b(?:temperature|top_p|top_k|logit_bias|presence_penalty|frequency_penalty|seed|n|logprobs|top_logprobs|max_tokens|model)\s*[=:]\s*(?:request|req|body|payload|params|data|args|input|json|query|user_\w+|kwargs|self\.\w*req\w*)\b[\w.\[\]\"''()]*|\*\*\s*(?:request|req|body|payload|params|data)\b[\w.\[\]\"''()]*'
+    unless_file: '\bclamp\(|min\(\s*max\(|max\(\s*min\(|Field\([^)]*\ble\s*=|conint\(|confloat\(|ALLOWED_(?:MODELS|PARAMS)|allowed_params'
+    message: 'Untrusted callers can set decoding parameters (temperature, top-k, logit_bias, n, logprobs) enabling model extraction and abuse'
+    remediation: 'Constrain to server-side approved ranges/defaults and reject out-of-policy values (e.g. Pydantic Field(ge=,le=)).'
+
+  - id: AIS-EV-ADV-EVAL
+    title: 'Adversarial attack evaluation tooling'
+    kind: evidence
+    requirements: ['11.1.3']
+    pattern: 'adversarial-robustness-toolbox|\bart\.attacks|\bfoolbox\b|\bcleverhans\b|\btextattack\b|\badvertorch\b|\bautoattack\b|\brobustbench\b|\bgarak\b|\bpyrit\b|\bpromptfoo\b|\bPromptBench\b|\bharmbench\b|\badvbench\b|llm-attacks|\bgiskard\b|\bdeepteam\b|\bjailbreakbench\b|\bagentdojo\b|red[_ -]?team'
+
+  - id: AIS-EV-ADV-HARDEN
+    title: 'Adversarial hardening'
+    kind: evidence
+    requirements: ['11.1.4']
+    pattern: 'adversarial[_ ]training|AdversarialTrainer|\bPGD\b|\bFGSM\b|\bTRADES\b|randomized[_ ]smoothing|certified[_ ]robust|defensive[_ ]distillation|input[_ ]transformation|art\.defences|safety[_ ]fine[_ -]?tun|\bRLHF\b|\bDPOTrainer\b|constitutional[_ ]ai|circuit[_ ]breakers?'
+
+  - id: AIS-EV-ALIGNMENT-TRAIN
+    title: 'Alignment / safety training or fine-tuning'
+    kind: evidence
+    requirements: ['11.1.1']
+    confidence: low
+    pattern: 'safety[_ ]fine[_ -]?tun|\bRLHF\b|\bDPOTrainer\b|\bPPOTrainer\b|constitutional[_ ]ai|safety[_ ]alignment|refusal[_ ]training|\bRLAIF\b|llama[_ -]?guard|alignment[_ ]dataset'
+
+  - id: AIS-EV-ANOMALY-INPUT
+    title: 'Anomaly / OOD detection on inputs'
+    kind: evidence
+    requirements: ['11.4.1', '11.4.2']
+    pattern: 'IsolationForest|LocalOutlierFactor|OneClassSVM|alibi[_-]?detect|\bpyod\b|Mahalanobis|outlier[_ -]?detect|anomaly[_ -]?detect|out[_-]of[_-]distribution|\bOOD\b|novelty[_ ]detect|perplexity[_ ]filter|anomaly[_ ]score'
+
+  - id: AIS-EV-CALIBRATION
+    title: 'Output confidence calibration'
+    kind: evidence
+    requirements: ['11.2.3']
+    confidence: low
+    pattern: 'CalibratedClassifierCV|temperature[_ ]scaling|\bisotonic\b|\bplatt\b|\bcalibrat(?:e|ion|or)\b|expected_calibration_error|\bECE\b|label_smoothing'
+
+  - id: AIS-EV-CLEAN-VS-ADV
+    title: 'Adversarial results reported with clean baseline'
+    kind: evidence
+    requirements: ['11.1.6']
+    confidence: low
+    pattern: 'clean[_ ]accuracy|robust[_ ]accuracy|benign[_ ]accuracy|no[_ ]attack|attack[_ ]free|baseline[^\n]{0,40}adversarial|adversarial[^\n]{0,40}baseline'
+
+  - id: AIS-EV-DP
+    title: 'Differentially-private optimization'
+    kind: evidence
+    requirements: ['11.2.4']
+    requires: [training]
+    pattern: '\bopacus\b|\bPrivacyEngine\b|tensorflow_privacy|\bDPKerasSGD|\bdiffprivlib\b|dp_sgd|\bDPOptimizer\b|make_private|jax_privacy|dp-accounting|differential[_ ]privacy|noise_multiplier|\bDP-?SGD\b'
+
+  - id: AIS-EV-EXTRACTION-DETECT
+    title: 'Query-pattern / extraction-attempt detection'
+    kind: evidence
+    requirements: ['11.3.1', '12.2.4']
+    confidence: low
+    pattern: 'extraction[_ -]?(?:detect|attempt|attack|alert)|query[_ -]pattern|model[_ -]extraction|suspicious[_ ]queries|abuse[_ ]detect|bot[_ ]detect|fraud_score|similar[_ ]queries'
+
+  - id: AIS-EV-EXTRACTION-RESPONSE
+    title: 'Response measures on suspected extraction'
+    kind: evidence
+    requirements: ['11.3.4']
+    confidence: low
+    pattern: 'block_user|ban_user|suspend_(?:user|key)|revoke_(?:key|api_key)|throttle_user|disable_key|quarantine_user'
+
+  - id: AIS-EV-FEEDBACK-GATE
+    title: 'Poisoning detection / human review in safety feedback pipeline'
+    kind: evidence
+    requirements: ['11.4.3']
+    confidence: low
+    pattern: 'feedback[^\n]{0,60}(?:review|moderat|poison|approv)|(?:review|moderat|approv)[^\n]{0,60}feedback'
+
+  - id: AIS-EV-HARM-RATE
+    title: 'Automated harmful-content rate + regression threshold'
+    kind: evidence
+    requirements: ['11.1.5']
+    confidence: low
+    pattern: 'harmful[_ -]rate|attack[_ ]success[_ ]rate|\bASR\b[^\n]{0,40}(?:threshold|<|>)|safety_score|toxicity_rate|harm_rate|regression[^\n]{0,40}threshold|llm[_ -]judge'
+
+  - id: AIS-EV-MIA-TEST
+    title: 'Membership-inference attack simulation'
+    kind: evidence
+    requirements: ['11.2.5']
+    requires: [training, model_loading]
+    pattern: 'privacy_meter|membership[_ -]inference|MembershipInference|privacy_tests|\bmia_attack\b|\bLiRA\b'
+
+  - id: AIS-EV-RATELIMIT
+    title: 'Per-principal / global rate limiting on inference endpoints'
+    kind: evidence
+    requirements: ['11.2.2']
+    pattern: '\bslowapi\b|\bLimiter\(|RateLimiter|rate_limit|ratelimit|rate-limit|express-rate-limit|rateLimit\(|\bthrottl\w+|limit_req\b|limit_req_zone|upstash/ratelimit|flask_limiter|django-ratelimit|@limiter|token[_-]bucket|TokenBucket|bucket4j|usage_plan|api_throttl|rate-limiting'
+
+  - id: AIS-EV-WATERMARK-MODEL
+    title: 'Model watermarking / fingerprinting'
+    kind: evidence
+    requirements: ['11.3.3']
+    pattern: 'model[_ ]watermark|watermark[_ ]model|model[_ ]fingerprint|\bsynthid\b|kirchenbauer|\bMarkLLM\b|\bllm[_ -]watermark|green[_ ]list'

@@ -1,0 +1,55 @@
+# OWASP AISVS Chapter C1: Training Data Integrity & Traceability
+# Declarative verification & evidence rules (7 rules)
+
+rules:
+  - id: AIS-EV-BIAS
+    title: 'Bias / fairness evaluation'
+    kind: evidence
+    requirements: ['1.3.3']
+    requires: [training, model_loading]
+    pattern: '\bfairlearn\b|\baif360\b|\baequitas\b|bias[_ ]?(?:audit|eval|metric|test)|demographic[_ ]parity|equalized[_ ]odds|disparate[_ ]impact|\bBBQ\b|WinoBias|StereoSet|CrowS-?Pairs|equal_opportunity'
+
+  - id: AIS-EV-DATA-FILTER
+    title: 'Disallowed content removal before training'
+    kind: evidence
+    requirements: ['1.3.4']
+    confidence: low
+    requires: [training]
+    pattern: '\bdetoxify\b|\bnsfw\b|toxicity|PhotoDNA|\bcsam\b|dataset[_ ]filter|filter[_ ]dataset|safety[_ ]filter|better_profanity|llama[_ -]?guard|pii[_ ]removal|content[_ ]filter'
+
+  - id: AIS-EV-DATA-INVENTORY
+    title: 'Dataset inventory / datasheets / cards'
+    kind: evidence
+    requirements: ['1.1.2']
+    confidence: low
+    requires: [training]
+    pattern: '\bdatasheet\b|data[_ -]?card|dataset[_ -]card|DATA_CARD|\bcroissant\b|dataset_info|data[_ ]catalog|\bdatahub\b|data_sources?\b[:=]|source[_ ]inventory'
+
+  - id: AIS-EV-DATA-MONITOR
+    title: 'Training-data integrity / quality monitoring'
+    kind: evidence
+    requirements: ['1.1.4']
+    requires: [training]
+    pattern: 'great_expectations|\bpandera\b|\bdeepchecks\b|\bevidently\b|\bwhylogs\b|tensorflow_data_validation|\btfdv\b|\bsoda\b|object_lock|ObjectLock|versioning\s*[{:=]\s*(?:true|\{)|\bdvc\s+status\b'
+
+  - id: AIS-EV-DATA-WATERMARK
+    title: 'Dataset watermarking / canaries'
+    kind: evidence
+    requirements: ['1.1.5']
+    requires: [training]
+    pattern: 'dataset[_ ]watermark|data[_ ]watermark|radioactive[_ ]data|dataset[_ ]fingerprint|canary[_ ]records?|data[_ ]canar(?:y|ies)'
+
+  - id: AIS-EV-LABELQ
+    title: 'Label quality / confidence checks'
+    kind: evidence
+    requirements: ['1.3.2']
+    confidence: low
+    requires: [training]
+    pattern: '\bcleanlab\b|find_label_issues|confident[_ ]learning|label[_ ]confidence|pseudo[_ -]?label[^\n]{0,80}threshold|label[_ ]noise|\bsnorkel\b|weak[_ ]supervision|annotator[_ ]agreement|cohen_kappa|inter[_ -]annotator'
+
+  - id: AIS-EV-POISON
+    title: 'Data poisoning detection'
+    kind: evidence
+    requirements: ['1.3.1', '1.3.5']
+    requires: [training]
+    pattern: '\bcleanlab\b|activation[_ ]clustering|spectral[_ ]signature|poison\w*[_ ]detect|detect[_ ]poison|art\.defences\.detector|data[_ ]sanitization|neural[_ ]cleanse|anti-?backdoor|influence[_ ]function|clean[_ -]?label|feature[_ ]collision|sleeper[_ ]agent'

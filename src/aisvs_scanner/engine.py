@@ -71,6 +71,8 @@ class ScanConfig:
     min_confidence: str = "low"  # low, medium, high
     rules_filter: Optional[List[str]] = None
     ignored_rules: Optional[List[str]] = None
+    custom_rules: Optional[List[str]] = None
+    no_builtin_rules: bool = False
     fail_on: Optional[Severity] = None
 
 
@@ -78,7 +80,10 @@ class Scanner:
     def __init__(self, config: ScanConfig):
         self.config = config
         self.catalog = catalog.load(version=config.version, path=config.catalog_path)
-        self.rules: List[Rule] = all_rules()
+        self.rules: List[Rule] = all_rules(
+            extra_paths=config.custom_rules,
+            include_builtin=not config.no_builtin_rules,
+        )
         if config.rules_filter:
             rf = set(config.rules_filter)
             self.rules = [r for r in self.rules if r.id in rf]
@@ -91,13 +96,20 @@ class Scanner:
         target_path = self.config.target.resolve()
 
         # Step 1: Collect files
-        all_files: List[FileCtx] = list(
-            walk(
+        custom_rule_paths: Set[Path] = set()
+        if self.config.custom_rules:
+            for cr in self.config.custom_rules:
+                crp = Path(cr).resolve()
+                custom_rule_paths.add(crp)
+        all_files: List[FileCtx] = [
+            f for f in walk(
                 target_path,
                 exclude_globs=self.config.exclude_globs,
                 include_artifacts=True,
             )
-        )
+            if f.path.resolve() not in custom_rule_paths
+            and not any(cp in f.path.resolve().parents for cp in custom_rule_paths)
+        ]
 
         # Step 2: Detect AI profile / component usage
         features = detect_features(all_files)
