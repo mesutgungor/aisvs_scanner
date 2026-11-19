@@ -1,5 +1,5 @@
 # OWASP AISVS Chapter C9: Orchestration & Agentic Action
-# Declarative verification & evidence rules (25 rules)
+# Declarative verification & evidence rules (27 rules)
 
 rules:
   - id: AIS-AGENT-001
@@ -42,6 +42,17 @@ rules:
     pattern: '(?:subprocess\.\w+|os\.system|execSync|exec|spawn)\([^\n]*(?:pip|pip3|npm|npx|uvx|cargo)\s+(?:-y\s+)?install[^\n]*(?:\{|\$\{|%s|\+\s*\w)'
     message: 'Agent can install arbitrary dependencies named at runtime'
     remediation: 'Verify requested packages against an approved registry/allow-list before install.'
+
+  - id: AIS-AGENT-005
+    title: 'Approved action chain mutable or unverified on expansion'
+    kind: violation
+    requirements: ['9.2.11', '9.2.10']
+    severity: high
+    langs: [code, json, yaml, toml, config]
+    requires: [agent, mcp_server, mcp_client]
+    pattern: 'allow_chain_expansion\b[^\n]{0,16}\b(?:true|True)|skip_chain_reapproval\b[^\n]{0,16}\b(?:true|True)|auto_expand_plan\b[^\n]{0,16}\b(?:true|True)|reapprove_on_plan_change\b[^\n]{0,16}\b(?:false|False)'
+    message: 'Agent execution can expand beyond the approved action chain without obtaining a new approval across the cumulative chain'
+    remediation: 'Block execution whenever planned or delegated steps exceed the approved action chain until a fresh approval is obtained enforcing the highest-impact reversibility classification across the cumulative chain.'
 
   - id: AIS-PROMPT-004
     title: 'Secret or credential embedded in prompt text'
@@ -104,6 +115,14 @@ rules:
     confidence: low
     requires: [agent]
     pattern: 'approval[_ ]timeout|approv\w*[^\n]{0,60}(?:expire|timeout|ttl)|(?:expire|timeout)[^\n]{0,60}approv\w*|default[_ ]deny'
+
+  - id: AIS-EV-ACTION-CHAIN-REAPPROVAL
+    title: 'Cumulative action-chain expansion re-approval gate'
+    kind: evidence
+    requirements: ['9.2.11']
+    confidence: low
+    requires: [agent, mcp_server, mcp_client]
+    pattern: 'approved[_ -]?(?:action[_ -]?)?chain|cumulative[_ -]?(?:action[_ -]?)?(?:chain|reversibility|impact)|exceed\w*[^\n]{0,50}approved[_ -]?(?:chain|plan)|plan[_ -]?(?:hash|digest|drift|expansion)[^\n]{0,60}(?:re[-_]?approv|approv|block)|re[-_]?approv\w*[^\n]{0,60}(?:chain|plan|cumulative)'
 
   - id: AIS-EV-BUDGET
     title: 'Execution budget / loop limit'

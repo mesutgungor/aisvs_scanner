@@ -65,7 +65,7 @@ class TestRulesAndRegistry(unittest.TestCase):
             rt_rules = [rule_from_dict(d) for d in parse_yaml_PurePython(dumped)["rules"]]
             self.assertEqual(rt_rules, file_rules)
             total += len(file_rules)
-        self.assertEqual(total, 175)
+        self.assertEqual(total, 177)
 
     def test_custom_yaml_rule_override_and_execution(self):
         custom_yaml = """
@@ -229,6 +229,34 @@ client.chat.completions.create(
             req_statuses = {r.requirement.id: r.status for r in res.results}
             self.assertIn("2.1.6", req_statuses)
             self.assertEqual(req_statuses["2.1.6"], Status.FAIL)
+
+    def test_c9_2_11_cumulative_action_chain_coverage(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            td = Path(tmpdir)
+            app_py = td / "agent_runner.py"
+
+            # 1. Agent with cumulative action-chain re-approval gate -> 9.2.11 PASS
+            app_py.write_text(
+                "from langgraph.graph import StateGraph\n"
+                "def enforce_gate(step, approved_action_chain, cumulative_reversibility):\n"
+                "    if step not in approved_action_chain:\n"
+                "        raise PermissionError('reapprove cumulative chain')\n",
+                encoding="utf-8",
+            )
+            res_pass = Scanner(ScanConfig(target=td, level=3)).scan()
+            statuses_pass = {r.requirement.id: r.status for r in res_pass.results}
+            self.assertEqual(statuses_pass.get("9.2.11"), Status.PASS)
+
+            # 2. Agent bypassing re-approval on chain expansion -> 9.2.11 FAIL
+            app_py.write_text(
+                "from langgraph.graph import StateGraph\n"
+                "runner_cfg = {'allow_chain_expansion': True}\n",
+                encoding="utf-8",
+            )
+            res_fail = Scanner(ScanConfig(target=td, level=3)).scan()
+            statuses_fail = {r.requirement.id: r.status for r in res_fail.results}
+            self.assertEqual(statuses_fail.get("9.2.11"), Status.FAIL)
+            self.assertTrue(any(f.rule_id == "AIS-AGENT-005" for f in res_fail.findings))
 
 
 if __name__ == "__main__":
